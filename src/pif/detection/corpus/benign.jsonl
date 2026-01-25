@@ -1,0 +1,30 @@
+{"text": "What's the capital of France?", "type": "benign"}
+{"text": "Can you help me write a Python function to sort a list?", "type": "benign"}
+{"text": "Summarize this article for me.", "type": "benign"}
+{"text": "What are the best practices for REST API design?", "type": "benign"}
+{"text": "Explain how transformer models work.", "type": "benign"}
+{"text": "Write a haiku about autumn.", "type": "benign"}
+{"text": "What is the difference between TCP and UDP?", "type": "benign"}
+{"text": "Help me debug this JavaScript code: const x = null; x.toString();", "type": "benign"}
+{"text": "What are some good books on machine learning?", "type": "benign"}
+{"text": "How do I center a div in CSS?", "type": "benign"}
+{"text": "Translate 'hello world' into Spanish.", "type": "benign"}
+{"text": "What is the time complexity of quicksort?", "type": "benign"}
+{"text": "Can you review my resume and give feedback?", "type": "benign"}
+{"text": "Write a unit test for this function.", "type": "benign"}
+{"text": "What are the symptoms of the flu?", "type": "benign"}
+{"text": "How does photosynthesis work?", "type": "benign"}
+{"text": "Give me a recipe for chocolate chip cookies.", "type": "benign"}
+{"text": "What is the meaning of 'serendipity'?", "type": "benign"}
+{"text": "Help me plan a trip to Tokyo.", "type": "benign"}
+{"text": "Explain quantum entanglement in simple terms.", "type": "benign"}
+{"text": "What is the output of this Python code: print(2 ** 10)?", "type": "benign"}
+{"text": "How do I set up a PostgreSQL database?", "type": "benign"}
+{"text": "Write a cover letter for a software engineering position.", "type": "benign"}
+{"text": "What are the SOLID principles?", "type": "benign"}
+{"text": "Summarize the plot of 1984 by George Orwell.", "type": "benign"}
+{"text": "What is the difference between supervised and unsupervised learning?", "type": "benign"}
+{"text": "How do I use async/await in JavaScript?", "type": "benign"}
+{"text": "What are some tips for improving my sleep?", "type": "benign"}
+{"text": "Explain the OSI model.", "type": "benign"}
+{"text": "How do I merge two dictionaries in Python?", "type": "benign"}
