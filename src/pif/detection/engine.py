@@ -10,12 +10,13 @@ from typing import Any
 from pif.detection import heuristics, semantic
 from pif.models import AttackType, DetectionResult, settings
 
-
 # Heuristics confidence >= this → skip semantic layer (fast path)
 _HEURISTIC_FAST_PATH = 0.65
 
 
-async def analyze(messages: list[dict[str, Any]], threshold: float | None = None) -> DetectionResult:
+async def analyze(
+    messages: list[dict[str, Any]], threshold: float | None = None
+) -> DetectionResult:
     """
     Full detection pipeline. Called from the proxy per request.
     Returns a DetectionResult with combined confidence and latency.
@@ -46,12 +47,13 @@ async def analyze(messages: list[dict[str, Any]], threshold: float | None = None
     loop = asyncio.get_running_loop()
     s_result = await loop.run_in_executor(None, semantic.check, text, None)
 
-    # Merge results — take max confidence, prefer semantic attack_type if it fired
+    # Merge results — take max confidence, prefer heuristic attack_type when it matched
     combined_confidence = max(h_result.confidence, s_result.confidence)
+    # Prefer heuristic's specific attack type — semantic only knows injection vs benign
     attack_type = (
-        s_result.attack_type
-        if s_result.is_injection
-        else (h_result.attack_type if h_result.matched_patterns else AttackType.BENIGN)
+        h_result.attack_type
+        if h_result.matched_patterns
+        else (s_result.attack_type if s_result.is_injection else AttackType.BENIGN)
     )
     matched = list(set(h_result.matched_patterns + s_result.matched_patterns))
 
@@ -60,7 +62,7 @@ async def analyze(messages: list[dict[str, Any]], threshold: float | None = None
         confidence=round(combined_confidence, 4),
         attack_type=attack_type,
         matched_patterns=matched,
-        layer_triggered=2 if s_result.layer_triggered == 2 else h_result.layer_triggered,
+        layer_triggered=2,  # semantic ran, so layer 2 is the final answer
         latency_ms=round((time.perf_counter() - start) * 1000, 2),
     )
 

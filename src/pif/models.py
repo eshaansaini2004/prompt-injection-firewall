@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Any
+
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -15,6 +16,8 @@ class Settings(BaseSettings):
     corpus_path: str = "src/pif/detection/corpus"
     block_threshold: float = 0.75
     store_payloads: bool = False
+    max_request_size_bytes: int = 1_048_576
+    dashboard_api_key: str | None = None
 
 
 settings = Settings()
@@ -31,6 +34,9 @@ class AttackType(str, Enum):
     MANY_SHOT = "many_shot"
     PRIVILEGE_ESCALATION = "privilege_escalation"
     ADVERSARIAL_SUFFIX = "adversarial_suffix"
+    RAG_POISONING = "rag_poisoning"
+    AGENTIC_INJECTION = "agentic_injection"
+    MULTIMODAL_INJECTION = "multimodal_injection"
     BENIGN = "benign"
 
 
