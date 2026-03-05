@@ -5,7 +5,6 @@ Covers the most common injection patterns via regex + structural signals.
 from __future__ import annotations
 
 import re
-import unicodedata
 
 from pif.models import AttackType, DetectionResult
 

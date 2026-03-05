@@ -5,7 +5,6 @@ Blocking I/O — always call via run_in_executor from async contexts.
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
 import numpy as np

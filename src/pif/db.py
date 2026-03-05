@@ -8,8 +8,8 @@ import hashlib
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import Column, Float, Integer, String, Boolean, DateTime, Text, select, func
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, func, select
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
 from pif.models import (

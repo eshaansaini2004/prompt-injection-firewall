@@ -28,9 +28,10 @@ def serve(
 @app.command()
 def check_corpus() -> None:
     """Validate and count corpus examples."""
-    from pif.models import settings
-    from pathlib import Path
     import json
+    from pathlib import Path
+
+    from pif.models import settings
 
     path = Path(settings.corpus_path)
     for fname in ("injections.jsonl", "benign.jsonl"):
