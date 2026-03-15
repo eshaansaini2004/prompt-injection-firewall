@@ -36,6 +36,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await db.init_db()
     db.start_broadcast_loop()
     yield
+    await _http_client.aclose()
 
 
 app = FastAPI(title="Prompt Injection Firewall", lifespan=lifespan)
