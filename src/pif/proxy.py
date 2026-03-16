@@ -62,6 +62,20 @@ app.add_middleware(
 
 _http_client = httpx.AsyncClient(timeout=60.0)
 
+# Headers that should never be forwarded to downstream clients
+_STRIP_HEADERS = {
+    # Hop-by-hop
+    "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
+    "te", "trailers", "transfer-encoding", "upgrade",
+    # Server fingerprinting
+    "server", "x-powered-by", "x-request-id", "x-amzn-requestid",
+    "x-amzn-trace-id", "cf-ray", "cf-cache-status",
+}
+
+
+def _safe_headers(headers: httpx.Headers) -> dict[str, str]:
+    return {k: v for k, v in headers.items() if k.lower() not in _STRIP_HEADERS}
+
 
 def _require_dashboard_auth(authorization: str | None = Header(default=None)) -> None:
     if settings.dashboard_api_key is None:
@@ -146,7 +160,7 @@ async def proxy_chat(
     return Response(
         content=upstream_resp.content,
         status_code=upstream_resp.status_code,
-        headers=dict(upstream_resp.headers),
+        headers=_safe_headers(upstream_resp.headers),
     )
 
 
@@ -174,7 +188,7 @@ async def proxy_passthrough(request: Request, path: str) -> Response:
     return Response(
         content=upstream_resp.content,
         status_code=upstream_resp.status_code,
-        headers=dict(upstream_resp.headers),
+        headers=_safe_headers(upstream_resp.headers),
     )
 
 
