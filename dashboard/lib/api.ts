@@ -49,10 +49,11 @@ export async function fetchAttackTypes() {
 
 export function createEventSocket(onEvent: (event: unknown) => void): WebSocket {
   const wsUrl = BASE.replace(/^http/, "ws");
-  const url = API_KEY
-    ? `${wsUrl}/ws/events?token=${API_KEY}`
-    : `${wsUrl}/ws/events`;
-  const ws = new WebSocket(url);
+  const ws = new WebSocket(`${wsUrl}/ws/events`);
+  ws.onopen = () => {
+    // Send auth as first message so the key never appears in URLs or access logs
+    if (API_KEY) ws.send(JSON.stringify({ token: API_KEY }));
+  };
   ws.onmessage = (e) => {
     try {
       onEvent(JSON.parse(e.data));

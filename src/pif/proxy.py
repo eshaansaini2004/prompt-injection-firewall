@@ -4,6 +4,7 @@ FastAPI app — proxy router + dashboard API + WebSocket.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -241,13 +242,20 @@ async def api_attack_types(_: None = Depends(_require_dashboard_auth)) -> Any:
 
 @app.websocket("/ws/events")
 async def ws_events(websocket: WebSocket) -> None:
+    await websocket.accept()
+
     if settings.dashboard_api_key is not None:
-        token = websocket.query_params.get("token")
-        if token != settings.dashboard_api_key:
+        # Auth via first message so the key never appears in URLs or access logs.
+        # Client sends: {"token": "<key>"}
+        try:
+            raw = await asyncio.wait_for(websocket.receive_text(), timeout=5.0)
+            msg = json.loads(raw)
+            if msg.get("token") != settings.dashboard_api_key:
+                await websocket.close(code=1008)
+                return
+        except (asyncio.TimeoutError, json.JSONDecodeError, KeyError):
             await websocket.close(code=1008)
             return
-
-    await websocket.accept()
     queue = await db.broadcast_subscribe()
     try:
         while True:
