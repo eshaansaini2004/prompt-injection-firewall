@@ -1,0 +1,33 @@
+services:
+  pif:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # db file lives on the named volume so it survives container restarts
+      DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:////app/db/pif.db}
+      UPSTREAM_LLM_URL: ${UPSTREAM_LLM_URL:-https://api.openai.com/v1}
+      UPSTREAM_API_KEY: ${UPSTREAM_API_KEY:-sk-your-key-here}
+      CORPUS_PATH: ${CORPUS_PATH:-src/pif/detection/corpus}
+      BLOCK_THRESHOLD: ${BLOCK_THRESHOLD:-0.75}
+      STORE_PAYLOADS: ${STORE_PAYLOADS:-false}
+      DASHBOARD_API_KEY: ${DASHBOARD_API_KEY:-}
+    volumes:
+      - ./src:/app/src
+      - pif_db:/app/db
+
+  dashboard:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./dashboard:/app
+    command: sh -c "npm install && npm run dev -- -p 3001"
+    ports:
+      - "3001:3001"
+    environment:
+      NEXT_PUBLIC_API_URL: http://pif:8000
+    depends_on:
+      - pif
+
+volumes:
+  pif_db:
