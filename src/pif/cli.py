@@ -90,5 +90,45 @@ def logs(limit: int = typer.Option(20, help="Number of recent events to show")) 
     asyncio.run(_run())
 
 
+@app.command()
+def test(
+    prompt: str | None = typer.Argument(None, help="Prompt to test. Reads from stdin if omitted."),
+    threshold: float | None = typer.Option(None, help="Override block threshold for this call."),
+    json_output: bool = typer.Option(False, "--json", help="Output raw JSON."),
+) -> None:
+    """Run the detection engine against a prompt."""
+    import sys
+
+    from pif.detection import engine
+
+    if prompt is None:
+        if sys.stdin.isatty():
+            console.print("[red]Error: provide a PROMPT argument or pipe text via stdin.[/red]")
+            raise typer.Exit(1)
+        prompt = sys.stdin.read()
+
+    prompt = prompt.strip()
+    if not prompt:
+        console.print("[red]Error: empty prompt.[/red]")
+        raise typer.Exit(1)
+
+    messages = [{"role": "user", "content": prompt}]
+    result = asyncio.run(engine.analyze(messages, threshold=threshold))
+
+    if json_output:
+        typer.echo(result.model_dump_json(indent=2))
+        return
+
+    verdict = typer.style("BLOCKED", fg=typer.colors.RED, bold=True) if result.is_injection else typer.style("ALLOWED", fg=typer.colors.GREEN, bold=True)
+    patterns = ", ".join(result.matched_patterns) if result.matched_patterns else "none"
+
+    typer.echo(f"Result:           {verdict}")
+    typer.echo(f"Confidence:       {result.confidence:.4f}")
+    typer.echo(f"Attack type:      {result.attack_type.value}")
+    typer.echo(f"Layer triggered:  {result.layer_triggered}")
+    typer.echo(f"Matched patterns: {patterns}")
+    typer.echo(f"Latency:          {result.latency_ms}ms")
+
+
 if __name__ == "__main__":
     app()
