@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     store_payloads: bool = False
     max_request_size_bytes: int = 1_048_576
     dashboard_api_key: str | None = None
+    rate_limit: str = "60/minute"
 
 
 settings = Settings()

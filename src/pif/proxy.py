@@ -24,12 +24,24 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from pif import db
 from pif.detection import engine
 from pif.models import AttackType, settings
 
 logger = logging.getLogger(__name__)
+
+limiter = Limiter(key_func=get_remote_address, default_limits=[])
+
+
+def _rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    return JSONResponse(
+        status_code=429,
+        content={"error": {"message": "Rate limit exceeded", "code": "rate_limit_exceeded"}},
+    )
 
 
 @asynccontextmanager
@@ -41,6 +53,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(title="Prompt Injection Firewall", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)  # type: ignore[arg-type]
 
 
 @app.middleware("http")
@@ -90,6 +104,7 @@ def _require_dashboard_auth(authorization: str | None = Header(default=None)) ->
 # ---------------------------------------------------------------------------
 
 @app.post("/v1/chat/completions")
+@limiter.limit(settings.rate_limit)
 async def proxy_chat(
     request: Request,
     x_firewall_mode: str = Header(default="block"),
