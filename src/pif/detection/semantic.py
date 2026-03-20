@@ -4,6 +4,7 @@ Blocking I/O — always call via run_in_executor from async contexts.
 """
 from __future__ import annotations
 
+import functools
 import json
 from pathlib import Path
 
@@ -16,6 +17,8 @@ from pif.models import AttackType, DetectionResult, settings
 _model: SentenceTransformer | None = None
 _injection_embeddings: np.ndarray | None = None
 _benign_embeddings: np.ndarray | None = None
+# Per-category embeddings for attack type classification
+_injection_embeddings_by_type: dict[AttackType, np.ndarray] | None = None
 
 
 def _get_model() -> SentenceTransformer:
@@ -26,8 +29,38 @@ def _get_model() -> SentenceTransformer:
     return _model
 
 
+@functools.lru_cache(maxsize=512)
+def _encode_cached(text: str) -> np.ndarray:
+    """Cache single-string embeddings to avoid recomputing on repeated inputs."""
+    return _get_model().encode(text, convert_to_numpy=True, normalize_embeddings=True)
+
+
+def cache_info() -> functools.lru_cache:  # type: ignore[type-arg]
+    """Expose LRU cache stats for CLI/stats endpoints."""
+    return _encode_cached.cache_info()
+
+
+# Map corpus "type" strings to AttackType enum values.
+# multi_turn_crescendo has no enum entry — fall back to DIRECT_INJECTION.
+_TYPE_MAP: dict[str, AttackType] = {
+    "direct_injection": AttackType.DIRECT_INJECTION,
+    "prompt_leaking": AttackType.PROMPT_LEAKING,
+    "jailbreak_persona": AttackType.JAILBREAK_PERSONA,
+    "roleplay_framing": AttackType.ROLEPLAY_FRAMING,
+    "hypothetical_framing": AttackType.HYPOTHETICAL_FRAMING,
+    "indirect_injection": AttackType.INDIRECT_INJECTION,
+    "obfuscation": AttackType.OBFUSCATION,
+    "many_shot": AttackType.MANY_SHOT,
+    "privilege_escalation": AttackType.PRIVILEGE_ESCALATION,
+    "adversarial_suffix": AttackType.ADVERSARIAL_SUFFIX,
+    "rag_poisoning": AttackType.RAG_POISONING,
+    "agentic_injection": AttackType.AGENTIC_INJECTION,
+    "multimodal_injection": AttackType.MULTIMODAL_INJECTION,
+}
+
+
 def _load_corpus(corpus_path: str) -> tuple[np.ndarray, np.ndarray]:
-    global _injection_embeddings, _benign_embeddings
+    global _injection_embeddings, _benign_embeddings, _injection_embeddings_by_type
 
     if _injection_embeddings is not None and _benign_embeddings is not None:
         return _injection_embeddings, _benign_embeddings
@@ -35,18 +68,28 @@ def _load_corpus(corpus_path: str) -> tuple[np.ndarray, np.ndarray]:
     model = _get_model()
     path = Path(corpus_path)
 
-    # Load injection examples
     injections_file = path / "injections.jsonl"
     benign_file = path / "benign.jsonl"
 
+    # Load injection examples grouped by type
     injection_texts: list[str] = []
+    texts_by_type: dict[AttackType, list[str]] = {}
+
     if injections_file.exists():
         with open(injections_file) as f:
             for line in f:
                 line = line.strip()
-                if line:
-                    obj = json.loads(line)
-                    injection_texts.append(obj.get("text", ""))
+                if not line:
+                    continue
+                obj = json.loads(line)
+                text = obj.get("text", "")
+                if not text:
+                    continue
+                injection_texts.append(text)
+
+                raw_type = obj.get("type", "")
+                attack_type = _TYPE_MAP.get(raw_type, AttackType.DIRECT_INJECTION)
+                texts_by_type.setdefault(attack_type, []).append(text)
 
     benign_texts: list[str] = []
     if benign_file.exists():
@@ -67,7 +110,37 @@ def _load_corpus(corpus_path: str) -> tuple[np.ndarray, np.ndarray]:
         model.encode(benign_texts, normalize_embeddings=True) if benign_texts else np.array([])
     )
 
+    # Build per-type embedding matrices
+    _injection_embeddings_by_type = {
+        attack_type: model.encode(texts, normalize_embeddings=True)
+        for attack_type, texts in texts_by_type.items()
+        if texts  # guard: skip empty (shouldn't happen, but be safe)
+    }
+
     return _injection_embeddings, _benign_embeddings
+
+
+def _classify_attack_type(query_emb: np.ndarray) -> AttackType:
+    """Return the attack type with the highest max cosine similarity to query_emb."""
+    if not _injection_embeddings_by_type:
+        return AttackType.DIRECT_INJECTION
+
+    best_type = AttackType.DIRECT_INJECTION
+    best_score = -1.0
+
+    for attack_type, embs in _injection_embeddings_by_type.items():
+        if embs.shape[0] == 0:
+            continue
+        try:
+            sims = cosine_similarity(query_emb, embs)[0]
+            score = float(np.max(sims))
+        except Exception:
+            continue
+        if score > best_score:
+            best_score = score
+            best_type = attack_type
+
+    return best_type
 
 
 def check(text: str, corpus_path: str | None = None) -> DetectionResult:
@@ -78,8 +151,10 @@ def check(text: str, corpus_path: str | None = None) -> DetectionResult:
     corpus = corpus_path or settings.corpus_path
     inj_embs, benign_embs = _load_corpus(corpus)
 
-    model = _get_model()
-    query_emb = model.encode([text], normalize_embeddings=True)
+    # Use cached embedding for the query text
+    query_vec = _encode_cached(text)
+    # cosine_similarity expects 2D arrays
+    query_emb = query_vec.reshape(1, -1)
 
     # Max similarity to any injection example
     inj_sims = cosine_similarity(query_emb, inj_embs)[0]
@@ -92,7 +167,6 @@ def check(text: str, corpus_path: str | None = None) -> DetectionResult:
         max_benign_sim = float(np.max(benign_sims))
 
     # Confidence = injection similarity adjusted by benign similarity
-    # If it's closer to benign examples, discount the injection score
     if max_benign_sim > max_inj_sim:
         confidence = max_inj_sim * 0.5
     else:
@@ -100,10 +174,15 @@ def check(text: str, corpus_path: str | None = None) -> DetectionResult:
 
     is_injection = confidence >= settings.block_threshold
 
+    if is_injection:
+        attack_type = _classify_attack_type(query_emb)
+    else:
+        attack_type = AttackType.BENIGN
+
     return DetectionResult(
         is_injection=is_injection,
         confidence=round(confidence, 4),
-        attack_type=AttackType.DIRECT_INJECTION if is_injection else AttackType.BENIGN,
+        attack_type=attack_type,
         matched_patterns=[f"semantic_sim={max_inj_sim:.3f}"],
         layer_triggered=2,
     )
