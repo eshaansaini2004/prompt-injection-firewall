@@ -4,7 +4,9 @@ Covers the most common injection patterns via regex + structural signals.
 """
 from __future__ import annotations
 
+import math
 import re
+from collections import Counter
 
 from pif.models import AttackType, DetectionResult
 
@@ -140,6 +142,53 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
             re.IGNORECASE,
         ),
     ),
+    # GCG adversarial suffixes — repeated unusual token patterns
+    (
+        AttackType.ADVERSARIAL_SUFFIX,
+        "gcg_repeated_tokens",
+        re.compile(
+            r"(\s*[!?}\]{|^~`]+\s*){5,}",  # 5+ repeated punctuation clusters
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        AttackType.ADVERSARIAL_SUFFIX,
+        "gcg_long_nonword_run",
+        re.compile(r"[\W_]{20,}"),  # 20+ consecutive non-word chars
+    ),
+    # Agentic / tool-use injection patterns
+    (
+        AttackType.AGENTIC_INJECTION,
+        "json_function_call_injection",
+        re.compile(
+            r'"\s*(function|tool_call|function_call)\s*"\s*:',
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        AttackType.AGENTIC_INJECTION,
+        "tool_result_tag_injection",
+        re.compile(
+            r"<(tool_result|function_response|TOOL_OUTPUT)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        AttackType.AGENTIC_INJECTION,
+        "fake_system_role_injection",
+        re.compile(
+            r'"\s*role\s*"\s*:\s*"\s*(system|assistant)\s*"',
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        AttackType.AGENTIC_INJECTION,
+        "direct_tool_invocation",
+        re.compile(
+            r"\b(call_function|invoke_tool|execute_tool)\s*\(",
+            re.IGNORECASE,
+        ),
+    ),
 ]
 
 # Hidden unicode: tag block (U+E0000–U+E007F) and zero-width chars
@@ -157,6 +206,28 @@ _HTML_COMMENT_INJECTION_RE = re.compile(
 
 def _count_qa_pairs(text: str) -> int:
     return len(re.findall(r"(^|\n)\s*Q\s*:\s*.+\n\s*A\s*:\s*.+", text, re.MULTILINE))
+
+
+def _char_entropy(text: str) -> float:
+    if not text:
+        return 0.0
+    counts = Counter(text)
+    total = len(text)
+    return -sum((c / total) * math.log2(c / total) for c in counts.values())
+
+
+def _check_gcg_entropy(text: str) -> bool:
+    """Detect GCG-style suffix: 30+ char window with high entropy AND high non-alphanum ratio."""
+    window = 30
+    if len(text) < window:
+        return False
+    for i in range(len(text) - window + 1):
+        chunk = text[i : i + window]
+        if _char_entropy(chunk) > 4.5:
+            non_alnum = sum(1 for c in chunk if not c.isalnum())
+            if non_alnum / window > 0.4:
+                return True
+    return False
 
 
 def check(text: str) -> DetectionResult:
@@ -183,6 +254,16 @@ def check(text: str) -> DetectionResult:
             layer_triggered=1,
         )
 
+    # GCG entropy check — high-entropy gibberish suffix
+    if _check_gcg_entropy(text):
+        return DetectionResult(
+            is_injection=True,
+            confidence=0.85,
+            attack_type=AttackType.ADVERSARIAL_SUFFIX,
+            matched_patterns=["gcg_high_entropy_suffix"],
+            layer_triggered=1,
+        )
+
     # Base64 blob
     if _BASE64_BLOB_RE.search(text):
         matched.append((AttackType.OBFUSCATION, "base64_blob"))
@@ -192,10 +273,24 @@ def check(text: str) -> DetectionResult:
     if qa_count > 5:
         matched.append((AttackType.MANY_SHOT, f"qa_pairs_count={qa_count}"))
 
-    # Run all regex patterns
+    # Run all regex patterns — track agentic matches separately for fixed confidence
+    agentic_matched: list[str] = []
     for attack_type, pattern_name, pattern in _PATTERNS:
         if pattern.search(text):
-            matched.append((attack_type, pattern_name))
+            if attack_type == AttackType.AGENTIC_INJECTION:
+                agentic_matched.append(pattern_name)
+            else:
+                matched.append((attack_type, pattern_name))
+
+    # Agentic injection: fixed confidence 0.80, return early if no higher-priority match
+    if agentic_matched and not matched:
+        return DetectionResult(
+            is_injection=True,
+            confidence=0.80,
+            attack_type=AttackType.AGENTIC_INJECTION,
+            matched_patterns=agentic_matched,
+            layer_triggered=1,
+        )
 
     if not matched:
         return DetectionResult(
