@@ -225,7 +225,7 @@ def _check_gcg_entropy(text: str) -> bool:
         chunk = text[i : i + window]
         if _char_entropy(chunk) > 4.5:
             non_alnum = sum(1 for c in chunk if not c.isalnum())
-            if non_alnum / window > 0.4:
+            if non_alnum / window > 0.55:
                 return True
     return False
 
