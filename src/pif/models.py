@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     store_payloads: bool = False
     max_request_size_bytes: int = 1_048_576
     dashboard_api_key: str | None = None
+    cors_allowed_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
     rate_limit: str = "60/minute"
 
 
@@ -33,6 +34,7 @@ class AttackType(str, Enum):
     INDIRECT_INJECTION = "indirect_injection"
     OBFUSCATION = "obfuscation"
     MANY_SHOT = "many_shot"
+    MULTI_TURN_CRESCENDO = "multi_turn_crescendo"
     PRIVILEGE_ESCALATION = "privilege_escalation"
     ADVERSARIAL_SUFFIX = "adversarial_suffix"
     RAG_POISONING = "rag_poisoning"
@@ -94,4 +96,4 @@ class ChatCompletionRequest(BaseModel):
     stream: bool = False
     temperature: float | None = None
     max_tokens: int | None = None
-    model_config = {"extra": "allow"}
+    model_config = ConfigDict(extra="allow")
