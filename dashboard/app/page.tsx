@@ -5,8 +5,16 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
 } from "recharts";
-import { Shield, ShieldAlert, Clock, Activity } from "lucide-react";
-import { fetchStats, fetchTimeline, fetchAttackTypes, createEventSocket } from "@/lib/api";
+import { Shield, ShieldAlert, Clock, Activity, Download } from "lucide-react";
+import {
+  fetchStats,
+  fetchTimeline,
+  fetchAttackTypes,
+  fetchEvents,
+  fetchEvent,
+  createEventSocket,
+} from "@/lib/api";
+import EventDetailPanel, { type EventDetail } from "@/app/components/EventDetailPanel";
 
 const ATTACK_COLORS: Record<string, string> = {
   direct_injection: "#ef4444",
@@ -21,6 +29,13 @@ const ATTACK_COLORS: Record<string, string> = {
   adversarial_suffix: "#7c3aed",
   benign: "#22c55e",
 };
+
+const TIME_WINDOWS: { label: string; hours: number }[] = [
+  { label: "1h", hours: 1 },
+  { label: "6h", hours: 6 },
+  { label: "24h", hours: 24 },
+  { label: "7d", hours: 168 },
+];
 
 function StatCard({
   icon: Icon,
@@ -68,22 +83,61 @@ export default function Dashboard() {
   const [timeline, setTimeline] = useState<TimelineBucket[]>([]);
   const [attackTypes, setAttackTypes] = useState<AttackTypeCount[]>([]);
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
+  const [timeWindow, setTimeWindow] = useState(24);
+  const [selectedEvent, setSelectedEvent] = useState<EventDetail | null>(null);
+  const [exporting, setExporting] = useState(false);
 
-  const loadData = useCallback(async () => {
-    const [s, t, a] = await Promise.all([fetchStats(), fetchTimeline(24), fetchAttackTypes()]);
+  const loadData = useCallback(async (hours: number) => {
+    const [s, t, a] = await Promise.all([fetchStats(), fetchTimeline(hours), fetchAttackTypes()]);
     setStats(s);
     setTimeline(t);
     setAttackTypes(a);
   }, []);
 
   useEffect(() => {
-    loadData();
+    loadData(timeWindow);
     const ws = createEventSocket((event) => {
       setLiveEvents((prev) => [event as LiveEvent, ...prev].slice(0, 20));
-      loadData();
+      loadData(timeWindow);
     });
     return () => ws.close();
-  }, [loadData]);
+  }, [loadData, timeWindow]);
+
+  async function handleEventClick(event: LiveEvent) {
+    // optimistically show what we have, then fetch full detail
+    setSelectedEvent({
+      id: event.id,
+      timestamp: event.timestamp,
+      attack_type: event.attack_type,
+      confidence: event.confidence,
+      blocked: event.blocked,
+      layer_triggered: event.layer_triggered,
+    });
+    try {
+      const full = await fetchEvent(event.id);
+      setSelectedEvent(full);
+    } catch {
+      // panel already shows partial data, good enough
+    }
+  }
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const data = await fetchEvents({ limit: 1000 });
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `pif-events-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const chartLabel = TIME_WINDOWS.find((w) => w.hours === timeWindow)?.label ?? "24h";
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white p-6">
@@ -103,7 +157,24 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-            <h2 className="text-sm font-medium text-zinc-400 mb-4">Requests — last 24h</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-medium text-zinc-400">Requests — last {chartLabel}</h2>
+              <div className="flex gap-1">
+                {TIME_WINDOWS.map((w) => (
+                  <button
+                    key={w.hours}
+                    onClick={() => setTimeWindow(w.hours)}
+                    className={`text-xs px-2.5 py-1 rounded-md transition-colors ${
+                      timeWindow === w.hours
+                        ? "bg-zinc-700 text-white"
+                        : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
+                    }`}
+                  >
+                    {w.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={timeline}>
                 <XAxis dataKey="hour" tick={{ fill: "#71717a", fontSize: 11 }} tickFormatter={(v: string) => v.slice(11, 16)} />
@@ -139,13 +210,27 @@ export default function Dashboard() {
         </div>
 
         <div className="mt-6 bg-zinc-900 border border-zinc-800 rounded-xl p-5">
-          <h2 className="text-sm font-medium text-zinc-400 mb-4">Live Feed</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-zinc-400">Live Feed</h2>
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="w-3.5 h-3.5" />
+              {exporting ? "Exporting…" : "Export"}
+            </button>
+          </div>
           {liveEvents.length === 0 ? (
             <p className="text-zinc-600 text-sm">Waiting for events...</p>
           ) : (
             <div className="space-y-2">
               {liveEvents.map((e) => (
-                <div key={e.id} className="flex items-center gap-3 text-sm py-2 border-b border-zinc-800 last:border-0">
+                <button
+                  key={e.id}
+                  onClick={() => handleEventClick(e)}
+                  className="w-full flex items-center gap-3 text-sm py-2 border-b border-zinc-800 last:border-0 hover:bg-zinc-800/50 rounded px-2 -mx-2 transition-colors text-left"
+                >
                   <span className="text-zinc-500 w-36 shrink-0 font-mono text-xs">{e.timestamp.slice(11, 19)}</span>
                   <AttackBadge type={e.attack_type} />
                   <span className="text-zinc-400 text-xs">{(e.confidence * 100).toFixed(0)}% conf</span>
@@ -153,12 +238,14 @@ export default function Dashboard() {
                     {e.blocked ? <span className="text-red-400">BLOCKED</span> : <span className="text-zinc-500">passed</span>}
                   </span>
                   <span className="text-zinc-600 text-xs">L{e.layer_triggered}</span>
-                </div>
+                </button>
               ))}
             </div>
           )}
         </div>
       </div>
+
+      <EventDetailPanel event={selectedEvent} onClose={() => setSelectedEvent(null)} />
     </main>
   );
 }

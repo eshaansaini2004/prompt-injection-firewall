@@ -39,6 +39,14 @@ export async function fetchTimeline(hours = 24) {
   return res.json();
 }
 
+export async function fetchEvent(event_id: string) {
+  const res = await fetch(`${BASE}/api/events/${event_id}`, {
+    cache: "no-store",
+    headers: authHeaders(),
+  });
+  return res.json();
+}
+
 export async function fetchAttackTypes() {
   const res = await fetch(`${BASE}/api/attack-types`, {
     cache: "no-store",
