@@ -149,18 +149,29 @@ async def get_timeline(hours: int = 24) -> list[TimelineBucket]:
     async with SessionLocal() as session:
         result = await session.execute(
             select(
-                func.strftime("%Y-%m-%dT%H:00:00", AttackEventRow.timestamp).label("hour"),
-                func.count(AttackEventRow.id).label("total"),
-                func.sum(AttackEventRow.blocked.cast(Integer)).label("blocked"),
-            )
-            .where(AttackEventRow.timestamp >= since)
-            .group_by("hour")
-            .order_by("hour")
+                AttackEventRow.timestamp,
+                AttackEventRow.blocked,
+            ).where(AttackEventRow.timestamp >= since)
         )
-        return [
-            TimelineBucket(hour=row.hour, total=row.total, blocked=row.blocked or 0)
-            for row in result
-        ]
+        rows = result.all()
+
+    # Bucket by hour in Python — avoids SQLite-specific strftime
+    buckets: dict[str, dict[str, int]] = {}
+    for ts, blocked in rows:
+        # Normalize to UTC and truncate to the hour
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+        hour_key = ts.strftime("%Y-%m-%dT%H:00:00")
+        if hour_key not in buckets:
+            buckets[hour_key] = {"total": 0, "blocked": 0}
+        buckets[hour_key]["total"] += 1
+        if blocked:
+            buckets[hour_key]["blocked"] += 1
+
+    return [
+        TimelineBucket(hour=h, total=v["total"], blocked=v["blocked"])
+        for h, v in sorted(buckets.items())
+    ]
 
 
 async def get_attack_type_counts() -> list[AttackTypeCount]:
@@ -181,8 +192,8 @@ async def get_attack_type_counts() -> list[AttackTypeCount]:
 
 
 async def broadcast_subscribe() -> asyncio.Queue[AttackEvent]:
-    """Each WS connection gets its own queue fed from the broadcast."""
-    q: asyncio.Queue[AttackEvent] = asyncio.Queue()
+    """Each WS connection gets its own bounded queue fed from the broadcast."""
+    q: asyncio.Queue[AttackEvent] = asyncio.Queue(maxsize=100)
     _subscribers.append(q)
     return q
 
@@ -197,16 +208,35 @@ async def broadcast_unsubscribe(q: asyncio.Queue[AttackEvent]) -> None:
 _subscribers: list[asyncio.Queue[AttackEvent]] = []
 
 
+_broadcast_task: asyncio.Task[None] | None = None
+
+
 async def _broadcast_loop() -> None:
     """Drains the central queue and fans out to all subscriber queues."""
-    while True:
-        event = await _broadcast_queue.get()
-        for sub in list(_subscribers):
-            await sub.put(event)
+    try:
+        while True:
+            event = await _broadcast_queue.get()
+            for sub in list(_subscribers):
+                try:
+                    sub.put_nowait(event)
+                except asyncio.QueueFull:
+                    # Subscriber is too slow — drop the event for this connection
+                    pass
+    except asyncio.CancelledError:
+        pass
 
 
 def start_broadcast_loop() -> None:
-    asyncio.create_task(_broadcast_loop())
+    global _broadcast_task
+    _broadcast_task = asyncio.create_task(_broadcast_loop())
+
+
+def stop_broadcast_loop() -> None:
+    """Cancel the broadcast loop task. Called from proxy lifespan teardown."""
+    global _broadcast_task
+    if _broadcast_task is not None and not _broadcast_task.done():
+        _broadcast_task.cancel()
+    _broadcast_task = None
 
 
 def _row_to_model(row: AttackEventRow) -> AttackEvent:
