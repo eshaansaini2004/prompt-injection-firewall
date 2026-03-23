@@ -34,6 +34,14 @@ from pif.models import AttackType, settings
 
 logger = logging.getLogger(__name__)
 
+
+def _warm_up_semantic() -> None:
+    from pif.detection import semantic
+    from pif.models import settings as _settings
+    semantic._get_model()
+    semantic._load_corpus(_settings.corpus_path)
+
+
 limiter = Limiter(key_func=get_remote_address, default_limits=[])
 
 
@@ -48,7 +56,15 @@ def _rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONRespons
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await db.init_db()
     db.start_broadcast_loop()
+    # Warm up the semantic layer in a thread pool so it's ready for the first request
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(None, _warm_up_semantic)
+        logger.info("semantic layer ready")
+    except Exception as exc:
+        logger.warning("semantic warm-up failed (will retry on first request): %s", exc)
     yield
+    db.stop_broadcast_loop()
     await _http_client.aclose()
 
 
@@ -70,9 +86,10 @@ async def request_size_limit(request: Request, call_next: Any) -> Response:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.cors_allowed_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-Firewall-Mode", "X-Firewall-Threshold", "X-Session-Id"],
 )
 
 _http_client = httpx.AsyncClient(timeout=60.0)
@@ -119,7 +136,10 @@ async def proxy_chat(
 
     blocked = result.is_injection and x_firewall_mode != "monitor"
 
-    asyncio.create_task(db.log_event(result, _messages_to_text(messages), model, blocked))
+    task = asyncio.create_task(db.log_event(result, _messages_to_text(messages), model, blocked))
+    task.add_done_callback(
+        lambda t: logger.error("log_event failed: %s", t.exception()) if t.exception() else None
+    )
 
     if blocked:
         return JSONResponse(
