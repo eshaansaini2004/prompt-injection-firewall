@@ -57,6 +57,35 @@ def check_corpus() -> None:
 
 
 @app.command()
+def reindex() -> None:
+    """Rebuild the semantic embedding index from the corpus files."""
+    import time
+    from pathlib import Path
+
+    from pif.detection import semantic
+    from pif.models import settings
+
+    path = Path(settings.corpus_path)
+    if not (path / "injections.jsonl").exists():
+        console.print(f"[red]Corpus not found at {path}[/red]")
+        raise typer.Exit(1)
+
+    console.print("[yellow]Clearing existing index...[/yellow]")
+    semantic.reset_corpus()
+
+    console.print("[yellow]Loading model and rebuilding index (this may take 30s)...[/yellow]")
+    t0 = time.perf_counter()
+    inj_embs, benign_embs = semantic._load_corpus(settings.corpus_path)
+    elapsed = time.perf_counter() - t0
+
+    console.print(
+        f"[green]Done in {elapsed:.1f}s — "
+        f"{len(inj_embs)} injection embeddings, "
+        f"{len(benign_embs)} benign embeddings[/green]"
+    )
+
+
+@app.command()
 def logs(limit: int = typer.Option(20, help="Number of recent events to show")) -> None:
     """Print recent attack events."""
     from pif import db
@@ -111,6 +140,9 @@ def test(
     if not prompt:
         console.print("[red]Error: empty prompt.[/red]")
         raise typer.Exit(1)
+
+    if not json_output:
+        console.print("[dim]Running detection (first run may be slow — model loading)...[/dim]")
 
     messages = [{"role": "user", "content": prompt}]
     result = asyncio.run(engine.analyze(messages, threshold=threshold))
