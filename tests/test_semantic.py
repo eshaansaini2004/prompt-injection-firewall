@@ -32,8 +32,8 @@ class TestBenignInput:
     def test_benign_input_not_flagged(self):
         result = semantic.check(BENIGN_TEXT, None)
         assert result.is_injection is False
-        assert result.confidence < 0.65, (
-            f"False positive: '{BENIGN_TEXT}' got confidence {result.confidence}"
+        assert result.confidence < settings.block_threshold, (
+            f"False positive: '{BENIGN_TEXT}' got confidence {result.confidence} (threshold={settings.block_threshold})"
         )
 
 
