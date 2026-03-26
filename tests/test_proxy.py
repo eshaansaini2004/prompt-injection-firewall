@@ -60,9 +60,10 @@ class TestProxyBlocking:
         mock_upstream.status_code = 200
         mock_upstream.headers = {}
 
+        mock_log = AsyncMock()
         with (
             patch("pif.proxy.engine.analyze", return_value=blocked_result),
-            patch("pif.proxy.db.log_event", new_callable=AsyncMock),
+            patch("pif.proxy.db.log_event", mock_log),
             patch("pif.proxy._http_client.post", new_callable=AsyncMock, return_value=mock_upstream),
         ):
             resp = await client.post(
@@ -73,6 +74,8 @@ class TestProxyBlocking:
 
         # In monitor mode, injections pass through
         assert resp.status_code == 200
+        # log_event should be called regardless of monitor mode
+        assert mock_log.called
 
     async def test_benign_forwarded(self, client, benign_result):
         mock_upstream = MagicMock()
