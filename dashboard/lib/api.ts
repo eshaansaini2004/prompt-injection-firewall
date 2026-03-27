@@ -5,12 +5,16 @@ function authHeaders(): Record<string, string> {
   return API_KEY ? { Authorization: `Bearer ${API_KEY}` } : {};
 }
 
-export async function fetchStats() {
-  const res = await fetch(`${BASE}/api/stats`, {
-    cache: "no-store",
-    headers: authHeaders(),
-  });
+async function apiFetch(url: string): Promise<unknown> {
+  const res = await fetch(url, { cache: "no-store", headers: authHeaders() });
+  if (!res.ok) {
+    throw new Error(`API error ${res.status}: ${res.statusText}`);
+  }
   return res.json();
+}
+
+export async function fetchStats() {
+  return apiFetch(`${BASE}/api/stats`);
 }
 
 export async function fetchEvents(params?: {
@@ -24,50 +28,62 @@ export async function fetchEvents(params?: {
   if (params?.offset) q.set("offset", String(params.offset));
   if (params?.blocked_only) q.set("blocked_only", "true");
   if (params?.attack_type) q.set("attack_type", params.attack_type);
-  const res = await fetch(`${BASE}/api/events?${q}`, {
-    cache: "no-store",
-    headers: authHeaders(),
-  });
-  return res.json();
+  return apiFetch(`${BASE}/api/events?${q}`);
 }
 
 export async function fetchTimeline(hours = 24) {
-  const res = await fetch(`${BASE}/api/timeline?hours=${hours}`, {
-    cache: "no-store",
-    headers: authHeaders(),
-  });
-  return res.json();
+  return apiFetch(`${BASE}/api/timeline?hours=${hours}`);
 }
 
 export async function fetchEvent(event_id: string) {
-  const res = await fetch(`${BASE}/api/events/${event_id}`, {
-    cache: "no-store",
-    headers: authHeaders(),
-  });
-  return res.json();
+  return apiFetch(`${BASE}/api/events/${event_id}`);
 }
 
 export async function fetchAttackTypes() {
-  const res = await fetch(`${BASE}/api/attack-types`, {
-    cache: "no-store",
-    headers: authHeaders(),
-  });
-  return res.json();
+  return apiFetch(`${BASE}/api/attack-types`);
 }
 
-export function createEventSocket(onEvent: (event: unknown) => void): WebSocket {
+export function createEventSocket(onEvent: (event: unknown) => void): { close: () => void } {
   const wsUrl = BASE.replace(/^http/, "ws");
-  const ws = new WebSocket(`${wsUrl}/ws/events`);
-  ws.onopen = () => {
-    // Send auth as first message so the key never appears in URLs or access logs
-    if (API_KEY) ws.send(JSON.stringify({ token: API_KEY }));
+  let ws: WebSocket | null = null;
+  let closed = false;
+  let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  function connect() {
+    if (closed) return;
+    ws = new WebSocket(`${wsUrl}/ws/events`);
+
+    ws.onopen = () => {
+      if (API_KEY) ws!.send(JSON.stringify({ token: API_KEY }));
+    };
+
+    ws.onmessage = (e) => {
+      try {
+        onEvent(JSON.parse(e.data));
+      } catch {
+        // ignore malformed frames
+      }
+    };
+
+    ws.onclose = () => {
+      if (!closed) {
+        // Reconnect after 3 seconds
+        retryTimeout = setTimeout(connect, 3000);
+      }
+    };
+
+    ws.onerror = () => {
+      ws?.close();
+    };
+  }
+
+  connect();
+
+  return {
+    close() {
+      closed = true;
+      if (retryTimeout) clearTimeout(retryTimeout);
+      ws?.close();
+    },
   };
-  ws.onmessage = (e) => {
-    try {
-      onEvent(JSON.parse(e.data));
-    } catch {
-      // ignore malformed frames
-    }
-  };
-  return ws;
 }
