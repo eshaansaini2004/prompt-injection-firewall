@@ -27,6 +27,10 @@ const ATTACK_COLORS: Record<string, string> = {
   many_shot: "#f59e0b",
   privilege_escalation: "#dc2626",
   adversarial_suffix: "#7c3aed",
+  multi_turn_crescendo: "#0ea5e9",
+  rag_poisoning: "#a855f7",
+  agentic_injection: "#f43f5e",
+  multimodal_injection: "#84cc16",
   benign: "#22c55e",
 };
 
