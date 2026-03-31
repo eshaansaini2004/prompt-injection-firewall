@@ -15,19 +15,24 @@ services:
     volumes:
       - ./src:/app/src
       - pif_db:/app/db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   dashboard:
-    image: node:20-alpine
-    working_dir: /app
-    volumes:
-      - ./dashboard:/app
-    command: sh -c "npm install && npm run dev -- -p 3001"
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
     ports:
       - "3001:3001"
     environment:
-      NEXT_PUBLIC_API_URL: http://pif:8000
+      NEXT_PUBLIC_API_URL: http://localhost:8000
     depends_on:
       - pif
+    restart: unless-stopped
 
 volumes:
   pif_db:
