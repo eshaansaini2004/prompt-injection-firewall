@@ -1,0 +1,79 @@
+name: Prompt Injection Scanner
+description: Scan PR descriptions, issue bodies, or any text for prompt injection attacks using PIF.
+author: eshaansaini
+
+inputs:
+  text:
+    description: Text to scan for prompt injection attacks.
+    required: true
+  threshold:
+    description: Confidence threshold to flag as injection (0.0–1.0). Default is 0.75.
+    required: false
+    default: '0.75'
+  fail_on_injection:
+    description: Fail the workflow step if an injection is detected. Default true.
+    required: false
+    default: 'true'
+  github_token:
+    description: GitHub token for posting comments. Pass secrets.GITHUB_TOKEN.
+    required: false
+    default: ''
+
+outputs:
+  is_injection:
+    description: 'true if injection detected, false otherwise'
+    value: ${{ steps.scan.outputs.is_injection }}
+  confidence:
+    description: Detection confidence score (0.0–1.0)
+    value: ${{ steps.scan.outputs.confidence }}
+  attack_type:
+    description: Detected attack category
+    value: ${{ steps.scan.outputs.attack_type }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install PIF
+      shell: bash
+      run: pip install git+https://github.com/eshaansaini2004/prompt-injection-firewall.git
+
+    - name: Scan for prompt injection
+      id: scan
+      shell: bash
+      env:
+        SCAN_TEXT: ${{ inputs.text }}
+        THRESHOLD: ${{ inputs.threshold }}
+      run: |
+        RESULT=$(echo "$SCAN_TEXT" | python -m pif.cli test --json --threshold "$THRESHOLD" 2>/dev/null || echo '{"is_injection":false,"confidence":0,"attack_type":"benign","matched_patterns":[],"layer_triggered":0,"latency_ms":0}')
+        echo "result=$RESULT" >> $GITHUB_STEP_SUMMARY
+
+        IS_INJECTION=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(str(d.get('is_injection',False)).lower())")
+        CONFIDENCE=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('confidence',0))")
+        ATTACK_TYPE=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('attack_type','benign'))")
+        PATTERNS=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(', '.join(d.get('matched_patterns',[])))")
+
+        echo "is_injection=$IS_INJECTION" >> $GITHUB_OUTPUT
+        echo "confidence=$CONFIDENCE" >> $GITHUB_OUTPUT
+        echo "attack_type=$ATTACK_TYPE" >> $GITHUB_OUTPUT
+
+        if [ "$IS_INJECTION" = "true" ]; then
+          echo "### ⚠️ Prompt Injection Detected" >> $GITHUB_STEP_SUMMARY
+          echo "**Attack type:** $ATTACK_TYPE" >> $GITHUB_STEP_SUMMARY
+          echo "**Confidence:** $CONFIDENCE" >> $GITHUB_STEP_SUMMARY
+          echo "**Matched patterns:** $PATTERNS" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ✅ No Injection Detected" >> $GITHUB_STEP_SUMMARY
+          echo "**Confidence:** $CONFIDENCE" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Fail if injection detected
+      if: steps.scan.outputs.is_injection == 'true' && inputs.fail_on_injection == 'true'
+      shell: bash
+      run: |
+        echo "Prompt injection detected (confidence: ${{ steps.scan.outputs.confidence }}, type: ${{ steps.scan.outputs.attack_type }})"
+        exit 1
