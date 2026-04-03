@@ -16,57 +16,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get text to scan
-        id: get_text
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            TEXT="${{ github.event.pull_request.title }}
-
-${{ github.event.pull_request.body }}"
-          else
-            TEXT="${{ github.event.issue.title }}
-
-${{ github.event.issue.body }}"
-          fi
-          # Write to file to handle multiline safely
-          echo "$TEXT" > /tmp/scan_text.txt
-          echo "text_file=/tmp/scan_text.txt" >> $GITHUB_OUTPUT
-
       - name: Scan for prompt injection
         id: scan
         uses: ./
         with:
-          text: ${{ github.event.pull_request.body || github.event.issue.body }}
+          text: ${{ github.event.pull_request.body || github.event.issue.body || '' }}
           threshold: '0.75'
           fail_on_injection: 'false'
-          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Comment if injection detected
         if: steps.scan.outputs.is_injection == 'true'
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const body = `> ⚠️ **Prompt Injection Warning**
-            >
-            > This ${ context.eventName === 'pull_request' ? 'PR description' : 'issue body' } was flagged by the [Prompt Injection Firewall](https://github.com/${{ github.repository }}).
-            >
-            > **Attack type:** \`${{ steps.scan.outputs.attack_type }}\`
-            > **Confidence:** ${{ steps.scan.outputs.confidence }}
-            >
-            > If this is a false positive, you can ignore this warning. If you're a maintainer running LLM pipelines on PR/issue content, review this before processing.`;
+            const type = '${{ steps.scan.outputs.attack_type }}';
+            const conf = '${{ steps.scan.outputs.confidence }}';
+            const target = context.eventName === 'pull_request' ? 'PR description' : 'issue body';
+            const number = context.eventName === 'pull_request'
+              ? context.payload.pull_request.number
+              : context.payload.issue.number;
 
-            if (context.eventName === 'pull_request') {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-                body
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.issue.number,
-                body
-              });
-            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: number,
+              body: [
+                '> ⚠️ **Prompt Injection Warning**',
+                '>',
+                `> This ${target} was flagged by the [Prompt Injection Firewall](https://github.com/${context.repo.owner}/${context.repo.repo}).`,
+                '>',
+                `> **Attack type:** \`${type}\` &nbsp; **Confidence:** ${conf}`,
+                '>',
+                '> If this is a false positive, ignore it. If you run LLM pipelines on PR/issue content, review before processing.',
+              ].join('\n')
+            });
