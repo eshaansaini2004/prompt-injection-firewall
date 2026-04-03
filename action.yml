@@ -37,20 +37,28 @@ runs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+        cache: pip
 
     - name: Install PIF
       shell: bash
-      run: pip install git+https://github.com/eshaansaini2004/prompt-injection-firewall.git
+      # Install from local checkout so corpus stays at its relative path.
+      # The calling workflow must run actions/checkout@v4 before this action.
+      working-directory: ${{ github.action_path }}
+      run: pip install -e . --quiet
 
     - name: Scan for prompt injection
       id: scan
       shell: bash
+      working-directory: ${{ github.action_path }}
       env:
         SCAN_TEXT: ${{ inputs.text }}
         THRESHOLD: ${{ inputs.threshold }}
       run: |
-        RESULT=$(echo "$SCAN_TEXT" | python -m pif.cli test --json --threshold "$THRESHOLD" 2>/dev/null || echo '{"is_injection":false,"confidence":0,"attack_type":"benign","matched_patterns":[],"layer_triggered":0,"latency_ms":0}')
-        echo "result=$RESULT" >> $GITHUB_STEP_SUMMARY
+        # Run detection. Errors go to stderr (visible in logs) not suppressed silently.
+        RESULT=$(echo "$SCAN_TEXT" | python -m pif.cli test --json --threshold "$THRESHOLD" 2>&1) || {
+          echo "::warning::PIF scan failed — defaulting to no injection. Check logs for details."
+          RESULT='{"is_injection":false,"confidence":0,"attack_type":"benign","matched_patterns":[],"layer_triggered":0,"latency_ms":0}'
+        }
 
         IS_INJECTION=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(str(d.get('is_injection',False)).lower())")
         CONFIDENCE=$(echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('confidence',0))")
