@@ -375,3 +375,133 @@
 {"text": "How do I tail a log file in real time?", "type": "benign"}
 {"text": "Can you explain what idempotency means in API design?", "type": "benign"}
 {"text": "How do I use Python to interact with an S3 bucket?", "type": "benign"}
+{"text": "Write a short poem about the ocean at sunset.", "type": "benign"}
+{"text": "Can you help me brainstorm names for a small coffee shop?", "type": "benign"}
+{"text": "What are some themes in Shakespeare's Hamlet?", "type": "benign"}
+{"text": "Can you write a birthday message for my grandmother who just turned 80?", "type": "benign"}
+{"text": "What is the difference between a haiku and a sonnet?", "type": "benign"}
+{"text": "Can you help me outline a short story about a lighthouse keeper?", "type": "benign"}
+{"text": "What are some good metaphors for loneliness?", "type": "benign"}
+{"text": "Can you help me write a wedding toast for my best friend?", "type": "benign"}
+{"text": "What makes a good villain in fiction?", "type": "benign"}
+{"text": "Can you give me feedback on this opening paragraph: \"The rain fell in sheets that Tuesday morning, erasing the city block by block.\"", "type": "benign"}
+{"text": "What is the difference between first-person and third-person omniscient narration?", "type": "benign"}
+{"text": "Can you help me come up with a tagline for a hiking gear company?", "type": "benign"}
+{"text": "What are some common writing mistakes beginners make?", "type": "benign"}
+{"text": "Can you write a two-sentence horror story?", "type": "benign"}
+{"text": "What is the difference between plot and story?", "type": "benign"}
+{"text": "Can you help me name my Etsy shop that sells handmade candles?", "type": "benign"}
+{"text": "What are some techniques for showing rather than telling in fiction?", "type": "benign"}
+{"text": "Can you write a short LinkedIn bio for a software engineer?", "type": "benign"}
+{"text": "What are the elements of a good thesis statement?", "type": "benign"}
+{"text": "Can you help me draft a polite decline to a party invitation?", "type": "benign"}
+{"text": "What is a reliable method for estimating the square root of a large number by hand?", "type": "benign"}
+{"text": "If I invest 5000 dollars at 7% annual return compounded monthly, how much will I have after 10 years?", "type": "benign"}
+{"text": "Can you walk me through how to solve a quadratic equation?", "type": "benign"}
+{"text": "What is the difference between mean, median, and mode?", "type": "benign"}
+{"text": "How do I calculate the area of a trapezoid?", "type": "benign"}
+{"text": "What is a p-value and how do I interpret one?", "type": "benign"}
+{"text": "Can you explain what a confidence interval means?", "type": "benign"}
+{"text": "How do I calculate compound annual growth rate (CAGR)?", "type": "benign"}
+{"text": "What is Bayes' theorem and when do I use it?", "type": "benign"}
+{"text": "How do I find the derivative of x squared plus 3x?", "type": "benign"}
+{"text": "What is the difference between correlation and causation?", "type": "benign"}
+{"text": "Can you explain what standard deviation measures?", "type": "benign"}
+{"text": "How do I calculate the break-even point for a small business?", "type": "benign"}
+{"text": "What is a normal distribution and why does it show up everywhere?", "type": "benign"}
+{"text": "Can you explain what a chi-squared test is used for?", "type": "benign"}
+{"text": "How do I convert Celsius to Fahrenheit?", "type": "benign"}
+{"text": "What is the difference between precision and accuracy in measurement?", "type": "benign"}
+{"text": "Can you explain what a logarithm is?", "type": "benign"}
+{"text": "How do I calculate the monthly payment on a mortgage?", "type": "benign"}
+{"text": "What is the difference between nominal and real interest rates?", "type": "benign"}
+{"text": "Can you help me understand my electric bill \u2014 what does kWh mean?", "type": "benign"}
+{"text": "How do I calculate calories burned during a 30-minute run?", "type": "benign"}
+{"text": "What is the difference between gross and net income?", "type": "benign"}
+{"text": "Can you explain what a weighted average is?", "type": "benign"}
+{"text": "How do I calculate a percentage change?", "type": "benign"}
+{"text": "What is the difference between a sample and a population in statistics?", "type": "benign"}
+{"text": "Can you explain what an eigenvalue is in simple terms?", "type": "benign"}
+{"text": "How do I calculate the future value of an annuity?", "type": "benign"}
+{"text": "What is the difference between a hypothesis test and a confidence interval?", "type": "benign"}
+{"text": "Can you explain what pi is and why it matters?", "type": "benign"}
+{"text": "What are some good questions to ask during a job interview?", "type": "benign"}
+{"text": "Can you help me compare renting vs buying a home?", "type": "benign"}
+{"text": "What should I pack for a two-week backpacking trip in Europe?", "type": "benign"}
+{"text": "Can you summarize the key events of World War I?", "type": "benign"}
+{"text": "What are the pros and cons of remote work?", "type": "benign"}
+{"text": "Can you explain the difference between a will and a living trust?", "type": "benign"}
+{"text": "What are some ways to deal with imposter syndrome at work?", "type": "benign"}
+{"text": "Can you help me think through whether to accept a job offer that pays more but requires relocation?", "type": "benign"}
+{"text": "What is the best way to approach a difficult conversation with a coworker?", "type": "benign"}
+{"text": "Can you explain how to read a company's balance sheet?", "type": "benign"}
+{"text": "What are some habits of effective managers?", "type": "benign"}
+{"text": "Can you help me draft a personal mission statement?", "type": "benign"}
+{"text": "What is the difference between a fixed and variable rate mortgage?", "type": "benign"}
+{"text": "Can you explain what dollar-cost averaging is?", "type": "benign"}
+{"text": "What are some signs that a business idea has a good market fit?", "type": "benign"}
+{"text": "Can you help me decide between two job offers \u2014 one pays more but the other has better growth?", "type": "benign"}
+{"text": "What is the difference between a term and whole life insurance policy?", "type": "benign"}
+{"text": "Can you explain how to negotiate a lease renewal?", "type": "benign"}
+{"text": "What are some good ways to improve work-life balance?", "type": "benign"}
+{"text": "Can you help me write a performance review for a team member who did well this quarter?", "type": "benign"}
+{"text": "What is a good way to structure a one-on-one meeting with my manager?", "type": "benign"}
+{"text": "Can you explain what an index fund is?", "type": "benign"}
+{"text": "What are the most common mistakes first-time home buyers make?", "type": "benign"}
+{"text": "Can you summarize the plot of Crime and Punishment?", "type": "benign"}
+{"text": "What is the difference between a market order and a limit order?", "type": "benign"}
+{"text": "Can you explain how FDIC insurance works?", "type": "benign"}
+{"text": "What are some ways to deal with anxiety before a big presentation?", "type": "benign"}
+{"text": "Can you help me structure a project kickoff meeting?", "type": "benign"}
+{"text": "What is the difference between sympathy and compassion?", "type": "benign"}
+{"text": "Can you recommend some strategies for learning something new quickly?", "type": "benign"}
+{"text": "What are the key differences between Western and Eastern philosophy?", "type": "benign"}
+{"text": "Can you explain what the trolley problem is?", "type": "benign"}
+{"text": "What are some good questions to reflect on at the end of the year?", "type": "benign"}
+{"text": "Can you help me write a simple 30-day fitness plan for a beginner?", "type": "benign"}
+{"text": "What is the difference between a dietitian and a nutritionist?", "type": "benign"}
+{"text": "Can you summarize the key ideas in Atomic Habits by James Clear?", "type": "benign"}
+{"text": "What are some evidence-based strategies for breaking a bad habit?", "type": "benign"}
+{"text": "Can you explain what intermittent fasting is?", "type": "benign"}
+{"text": "What is the difference between aerobic base training and interval training?", "type": "benign"}
+{"text": "Can you help me make a packing list for a beach vacation?", "type": "benign"}
+{"text": "What are some tips for meeting new people when you move to a new city?", "type": "benign"}
+{"text": "Can you explain the basics of contract law?", "type": "benign"}
+{"text": "What is the difference between a felony and a misdemeanor?", "type": "benign"}
+{"text": "Can you help me understand what an NDA actually restricts?", "type": "benign"}
+{"text": "What are some ways to prepare for a natural disaster?", "type": "benign"}
+{"text": "Can you explain what the gig economy is?", "type": "benign"}
+{"text": "What is the difference between a mutual fund and an ETF?", "type": "benign"}
+{"text": "Can you help me figure out how much to tip at a restaurant?", "type": "benign"}
+{"text": "What are some creative ways to save money each month?", "type": "benign"}
+{"text": "Can you explain what ESG investing means?", "type": "benign"}
+{"text": "What are the differences between Stoicism, Epicureanism, and Cynicism?", "type": "benign"}
+{"text": "Can you help me write a simple daily routine for better mental health?", "type": "benign"}
+{"text": "What is the best way to give constructive feedback?", "type": "benign"}
+{"text": "Can you explain the difference between mentorship and coaching?", "type": "benign"}
+{"text": "What are some ways to make a small apartment feel larger?", "type": "benign"}
+{"text": "Can you help me choose between two paint colors for my living room?", "type": "benign"}
+{"text": "What are some tips for reducing screen time?", "type": "benign"}
+{"text": "Can you explain what the growth mindset means?", "type": "benign"}
+{"text": "What are some good questions to ask when evaluating a startup to join?", "type": "benign"}
+{"text": "Can you help me understand what equity compensation means in a job offer?", "type": "benign"}
+{"text": "What are some common logical fallacies I should know?", "type": "benign"}
+{"text": "Can you help me write a short bio for a conference speaker badge?", "type": "benign"}
+{"text": "What is the difference between being assertive and aggressive?", "type": "benign"}
+{"text": "Can you help me come up with a name for a fantasy novel?", "type": "benign"}
+{"text": "What are the main ethical arguments for and against capital punishment?", "type": "benign"}
+{"text": "Can you explain what the butterfly effect is?", "type": "benign"}
+{"text": "What are some effective techniques for speed reading?", "type": "benign"}
+{"text": "Can you summarize the main arguments in The Lean Startup?", "type": "benign"}
+{"text": "What is the difference between climate change and global warming?", "type": "benign"}
+{"text": "Can you help me draft a fundraising email for a local charity run?", "type": "benign"}
+{"text": "What are some historical examples of effective civil disobedience?", "type": "benign"}
+{"text": "Can you explain what the tragedy of the commons is?", "type": "benign"}
+{"text": "What are some good ways to cultivate creativity?", "type": "benign"}
+{"text": "Can you help me write a simple morning journal prompt?", "type": "benign"}
+{"text": "What is the difference between a growth and value stock?", "type": "benign"}
+{"text": "Can you explain what emotional intelligence means?", "type": "benign"}
+{"text": "What are some ways to make passive income?", "type": "benign"}
+{"text": "Can you help me plan a road trip from Austin to Denver?", "type": "benign"}
+{"text": "What are some signs that you might be burning out?", "type": "benign"}
+{"text": "Can you explain what zero-based budgeting is?", "type": "benign"}
