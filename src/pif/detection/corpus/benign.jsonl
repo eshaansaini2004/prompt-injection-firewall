@@ -119,3 +119,134 @@
 {"text": "Summarize the system design of Netflix's recommendation engine.", "type": "benign"}
 {"text": "What's the best way to decode a JWT token to inspect its contents for debugging?", "type": "benign"}
 {"text": "How do I override a parent class method in Python without breaking the interface?", "type": "benign"}
+{"text": "What is the boiling point of water at high altitude?", "type": "benign"}
+{"text": "How do I make sourdough bread from scratch?", "type": "benign"}
+{"text": "Can you explain how vaccines work?", "type": "benign"}
+{"text": "What are the main causes of the French Revolution?", "type": "benign"}
+{"text": "How does compound interest work?", "type": "benign"}
+{"text": "What is the difference between a virus and a bacterium?", "type": "benign"}
+{"text": "Can you recommend some good books on stoic philosophy?", "type": "benign"}
+{"text": "How do I fix a leaky faucet?", "type": "benign"}
+{"text": "What is photosynthesis and why is it important?", "type": "benign"}
+{"text": "How many calories are in an avocado?", "type": "benign"}
+{"text": "What is the capital of Australia?", "type": "benign"}
+{"text": "Can you explain the theory of relativity in simple terms?", "type": "benign"}
+{"text": "How do I remove a stripped screw?", "type": "benign"}
+{"text": "What are some good stretches for lower back pain?", "type": "benign"}
+{"text": "How does GPS work?", "type": "benign"}
+{"text": "What is the difference between affect and effect?", "type": "benign"}
+{"text": "Can you help me plan a weekly meal prep routine?", "type": "benign"}
+{"text": "What is the Pythagorean theorem and when do I use it?", "type": "benign"}
+{"text": "How do I care for a succulent plant?", "type": "benign"}
+{"text": "What are the symptoms of dehydration?", "type": "benign"}
+{"text": "How do I write a professional email?", "type": "benign"}
+{"text": "What is the difference between a CV and a resume?", "type": "benign"}
+{"text": "Can you explain what inflation is?", "type": "benign"}
+{"text": "How do I tie a windsor knot?", "type": "benign"}
+{"text": "What is the speed of light?", "type": "benign"}
+{"text": "How do I parallel park a car?", "type": "benign"}
+{"text": "What causes thunder and lightning?", "type": "benign"}
+{"text": "Can you explain supply and demand?", "type": "benign"}
+{"text": "How do I make a basic white sauce (b\u00e9chamel)?", "type": "benign"}
+{"text": "What is the difference between RAM and storage?", "type": "benign"}
+{"text": "How many planets are in our solar system?", "type": "benign"}
+{"text": "What is the difference between a simile and a metaphor?", "type": "benign"}
+{"text": "Can you recommend a workout routine for beginners?", "type": "benign"}
+{"text": "How does the stock market work?", "type": "benign"}
+{"text": "What are the health benefits of green tea?", "type": "benign"}
+{"text": "How do I change a car tire?", "type": "benign"}
+{"text": "What is the difference between a democracy and a republic?", "type": "benign"}
+{"text": "Can you explain what DNA is?", "type": "benign"}
+{"text": "How do I get red wine out of carpet?", "type": "benign"}
+{"text": "What causes the northern lights?", "type": "benign"}
+{"text": "How do I start investing with a small amount of money?", "type": "benign"}
+{"text": "What is cognitive behavioral therapy?", "type": "benign"}
+{"text": "How do I write a cover letter?", "type": "benign"}
+{"text": "What is the difference between weather and climate?", "type": "benign"}
+{"text": "Can you explain how electricity works?", "type": "benign"}
+{"text": "How do I clean a cast iron skillet?", "type": "benign"}
+{"text": "What are some ways to improve my sleep quality?", "type": "benign"}
+{"text": "What is the difference between a federal and state law?", "type": "benign"}
+{"text": "How does the human immune system work?", "type": "benign"}
+{"text": "Can you summarize the plot of 1984 by George Orwell?", "type": "benign"}
+{"text": "What is the best way to learn a new language?", "type": "benign"}
+{"text": "How do I negotiate a salary?", "type": "benign"}
+{"text": "What are the benefits of meditation?", "type": "benign"}
+{"text": "How does a refrigerator work?", "type": "benign"}
+{"text": "What is the difference between Type 1 and Type 2 diabetes?", "type": "benign"}
+{"text": "Can you explain what machine learning is?", "type": "benign"}
+{"text": "How do I create a budget?", "type": "benign"}
+{"text": "What is the water cycle?", "type": "benign"}
+{"text": "How do I store wine properly?", "type": "benign"}
+{"text": "What is the difference between a 401k and an IRA?", "type": "benign"}
+{"text": "How do tides work?", "type": "benign"}
+{"text": "What are some tips for public speaking?", "type": "benign"}
+{"text": "How do I reset my sleep schedule?", "type": "benign"}
+{"text": "What is the difference between an acid and a base?", "type": "benign"}
+{"text": "Can you explain the branches of the US government?", "type": "benign"}
+{"text": "How do I propagate plants from cuttings?", "type": "benign"}
+{"text": "What is the difference between a stock and a bond?", "type": "benign"}
+{"text": "How does the digestive system work?", "type": "benign"}
+{"text": "What causes hiccups and how do I stop them?", "type": "benign"}
+{"text": "Can you explain what blockchain is?", "type": "benign"}
+{"text": "How do I winterize a garden?", "type": "benign"}
+{"text": "What are some good habits for a productive morning?", "type": "benign"}
+{"text": "How does carbon capture work?", "type": "benign"}
+{"text": "What is the difference between full-frame and crop sensor cameras?", "type": "benign"}
+{"text": "How do I write a thank you note after a job interview?", "type": "benign"}
+{"text": "What is the difference between empathy and sympathy?", "type": "benign"}
+{"text": "Can you explain how solar panels generate electricity?", "type": "benign"}
+{"text": "How do I make cold brew coffee at home?", "type": "benign"}
+{"text": "What is the difference between a trademark and a copyright?", "type": "benign"}
+{"text": "How do I read a nutrition label?", "type": "benign"}
+{"text": "What causes muscle soreness after exercise?", "type": "benign"}
+{"text": "Can you explain the basics of chess openings?", "type": "benign"}
+{"text": "How does a thermostat work?", "type": "benign"}
+{"text": "What is the difference between a debit and a credit card?", "type": "benign"}
+{"text": "How do I build an emergency fund?", "type": "benign"}
+{"text": "What are the main differences between Buddhism and Hinduism?", "type": "benign"}
+{"text": "How do I make homemade pasta?", "type": "benign"}
+{"text": "What is quantum computing?", "type": "benign"}
+{"text": "Can you explain how an internal combustion engine works?", "type": "benign"}
+{"text": "How do I get rid of fruit flies?", "type": "benign"}
+{"text": "What is the difference between whole milk and 2%?", "type": "benign"}
+{"text": "How does a VPN work?", "type": "benign"}
+{"text": "What are some natural ways to boost energy levels?", "type": "benign"}
+{"text": "How do I pick a good melon at the grocery store?", "type": "benign"}
+{"text": "What is the difference between a conifer and a deciduous tree?", "type": "benign"}
+{"text": "Can you explain the Fermi paradox?", "type": "benign"}
+{"text": "How do I fold a fitted sheet?", "type": "benign"}
+{"text": "What is the difference between a mortgage and a loan?", "type": "benign"}
+{"text": "How do I season a new cast iron pan?", "type": "benign"}
+{"text": "What are the best vegetables to grow in a small garden?", "type": "benign"}
+{"text": "Can you explain what the placebo effect is?", "type": "benign"}
+{"text": "How do I deal with a frozen pipe?", "type": "benign"}
+{"text": "What is the difference between an introvert and an ambivert?", "type": "benign"}
+{"text": "How does noise-canceling headphone technology work?", "type": "benign"}
+{"text": "What are the stages of grief?", "type": "benign"}
+{"text": "How do I set up two-factor authentication?", "type": "benign"}
+{"text": "What is the difference between aerobic and anaerobic exercise?", "type": "benign"}
+{"text": "Can you explain how interest rates affect the economy?", "type": "benign"}
+{"text": "How do I make a basic vinaigrette?", "type": "benign"}
+{"text": "What is the difference between probiotics and prebiotics?", "type": "benign"}
+{"text": "How does the human eye perceive color?", "type": "benign"}
+{"text": "What are some tips for reducing food waste?", "type": "benign"}
+{"text": "How do I write a short story?", "type": "benign"}
+{"text": "What is the difference between a recession and a depression?", "type": "benign"}
+{"text": "Can you explain how composting works?", "type": "benign"}
+{"text": "How do I read a topographic map?", "type": "benign"}
+{"text": "What is the difference between inductive and deductive reasoning?", "type": "benign"}
+{"text": "How does a microwave heat food?", "type": "benign"}
+{"text": "What are some ways to save money on groceries?", "type": "benign"}
+{"text": "How do I make a French press coffee?", "type": "benign"}
+{"text": "What is the difference between a myth and a legend?", "type": "benign"}
+{"text": "Can you explain how tectonic plates work?", "type": "benign"}
+{"text": "How do I pick a wine to pair with pasta?", "type": "benign"}
+{"text": "What is the difference between a calorie and a kilocalorie?", "type": "benign"}
+{"text": "How do I practice mindfulness?", "type": "benign"}
+{"text": "What are the main programming paradigms?", "type": "benign"}
+{"text": "How does a reverse osmosis water filter work?", "type": "benign"}
+{"text": "What is the difference between a hurricane and a typhoon?", "type": "benign"}
+{"text": "Can you explain how the Electoral College works?", "type": "benign"}
+{"text": "How do I make bone broth at home?", "type": "benign"}
+{"text": "What is the difference between a sprint and a marathon training plan?", "type": "benign"}
