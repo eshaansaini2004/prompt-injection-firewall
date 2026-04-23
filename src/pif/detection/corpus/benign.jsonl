@@ -250,3 +250,128 @@
 {"text": "Can you explain how the Electoral College works?", "type": "benign"}
 {"text": "How do I make bone broth at home?", "type": "benign"}
 {"text": "What is the difference between a sprint and a marathon training plan?", "type": "benign"}
+{"text": "Write a Python function that takes a list and returns its elements in reverse order.", "type": "benign"}
+{"text": "How do I set up a virtual environment in Python?", "type": "benign"}
+{"text": "What is the difference between == and === in JavaScript?", "type": "benign"}
+{"text": "Can you explain what a REST API is?", "type": "benign"}
+{"text": "How do I connect to a PostgreSQL database using Python?", "type": "benign"}
+{"text": "What is the difference between SQL and NoSQL?", "type": "benign"}
+{"text": "How do I center a div in CSS?", "type": "benign"}
+{"text": "Can you explain the concept of recursion with an example?", "type": "benign"}
+{"text": "How do I use git to undo my last commit?", "type": "benign"}
+{"text": "What is the difference between TCP and UDP?", "type": "benign"}
+{"text": "How do I write a unit test in Python using pytest?", "type": "benign"}
+{"text": "Can you explain what Docker is and when to use it?", "type": "benign"}
+{"text": "How do I parse JSON in JavaScript?", "type": "benign"}
+{"text": "What is the difference between a list and a tuple in Python?", "type": "benign"}
+{"text": "How do I handle exceptions in Python?", "type": "benign"}
+{"text": "Can you explain what an API key is and how to keep it secure?", "type": "benign"}
+{"text": "How do I make an HTTP GET request in Python?", "type": "benign"}
+{"text": "What is a hash table and how does it work?", "type": "benign"}
+{"text": "How do I filter a list in Python using list comprehension?", "type": "benign"}
+{"text": "Can you explain what CORS is and why it matters?", "type": "benign"}
+{"text": "How do I use async/await in JavaScript?", "type": "benign"}
+{"text": "What is the difference between a stack and a queue?", "type": "benign"}
+{"text": "How do I add a foreign key in a SQL table?", "type": "benign"}
+{"text": "Can you explain what object-oriented programming is?", "type": "benign"}
+{"text": "How do I read a file line by line in Python?", "type": "benign"}
+{"text": "What is Big O notation?", "type": "benign"}
+{"text": "How do I sort a dictionary by value in Python?", "type": "benign"}
+{"text": "Can you explain what a binary search tree is?", "type": "benign"}
+{"text": "How do I deploy a simple Flask app to a server?", "type": "benign"}
+{"text": "What is the difference between PUT and PATCH in REST?", "type": "benign"}
+{"text": "How do I use environment variables in a Node.js app?", "type": "benign"}
+{"text": "Can you explain what a linked list is?", "type": "benign"}
+{"text": "How do I remove duplicates from a list in Python?", "type": "benign"}
+{"text": "What is the difference between synchronous and asynchronous code?", "type": "benign"}
+{"text": "How do I create a simple Dockerfile?", "type": "benign"}
+{"text": "Can you explain what CSS flexbox is?", "type": "benign"}
+{"text": "How do I join two tables in SQL?", "type": "benign"}
+{"text": "What is the difference between a function and a method in Python?", "type": "benign"}
+{"text": "How do I implement a simple cache in Python?", "type": "benign"}
+{"text": "Can you explain what dependency injection is?", "type": "benign"}
+{"text": "How do I paginate API results?", "type": "benign"}
+{"text": "What is the difference between authentication and authorization?", "type": "benign"}
+{"text": "How do I use a regex to validate an email address?", "type": "benign"}
+{"text": "Can you explain what a microservice architecture is?", "type": "benign"}
+{"text": "How do I debug a Python script?", "type": "benign"}
+{"text": "What is the difference between inheritance and composition?", "type": "benign"}
+{"text": "How do I make a POST request with a JSON body in Python?", "type": "benign"}
+{"text": "Can you explain what webpack is used for?", "type": "benign"}
+{"text": "How do I write a bash script that loops over files in a directory?", "type": "benign"}
+{"text": "What is the difference between a process and a thread?", "type": "benign"}
+{"text": "How do I set up ESLint in a JavaScript project?", "type": "benign"}
+{"text": "Can you explain what Kubernetes is?", "type": "benign"}
+{"text": "How do I add an index to a database table and when should I?", "type": "benign"}
+{"text": "What is memoization and when should I use it?", "type": "benign"}
+{"text": "How do I implement rate limiting in a FastAPI app?", "type": "benign"}
+{"text": "Can you explain what a closure is in JavaScript?", "type": "benign"}
+{"text": "How do I merge two dictionaries in Python?", "type": "benign"}
+{"text": "What is the difference between a monolith and microservices?", "type": "benign"}
+{"text": "How do I write a migration script for a database schema change?", "type": "benign"}
+{"text": "Can you explain what GraphQL is and how it differs from REST?", "type": "benign"}
+{"text": "How do I generate a random UUID in Python?", "type": "benign"}
+{"text": "What is the difference between shallow copy and deep copy?", "type": "benign"}
+{"text": "How do I add authentication to a FastAPI endpoint?", "type": "benign"}
+{"text": "Can you explain what a race condition is?", "type": "benign"}
+{"text": "How do I profile a slow Python function?", "type": "benign"}
+{"text": "What is the difference between an interface and an abstract class?", "type": "benign"}
+{"text": "How do I compress a file in Python using gzip?", "type": "benign"}
+{"text": "Can you explain what CI/CD means?", "type": "benign"}
+{"text": "How do I parse command line arguments in Python?", "type": "benign"}
+{"text": "What is the difference between horizontal and vertical scaling?", "type": "benign"}
+{"text": "How do I use Pydantic to validate data in Python?", "type": "benign"}
+{"text": "Can you explain what a webhook is?", "type": "benign"}
+{"text": "How do I write a recursive fibonacci function in Python?", "type": "benign"}
+{"text": "What is the difference between eager and lazy loading?", "type": "benign"}
+{"text": "How do I make a Python package installable with pip?", "type": "benign"}
+{"text": "Can you explain what an ORM is?", "type": "benign"}
+{"text": "How do I list all running Docker containers?", "type": "benign"}
+{"text": "What is the difference between null and undefined in JavaScript?", "type": "benign"}
+{"text": "How do I set CORS headers in a FastAPI app?", "type": "benign"}
+{"text": "Can you explain what load balancing is?", "type": "benign"}
+{"text": "How do I schedule a cron job on Linux?", "type": "benign"}
+{"text": "What is the difference between a decorator and a middleware?", "type": "benign"}
+{"text": "How do I create a custom exception class in Python?", "type": "benign"}
+{"text": "Can you explain what a Merkle tree is?", "type": "benign"}
+{"text": "How do I convert a string to an integer in Python?", "type": "benign"}
+{"text": "What is the difference between a compiler and an interpreter?", "type": "benign"}
+{"text": "How do I check if a key exists in a Python dictionary?", "type": "benign"}
+{"text": "Can you explain the MVC design pattern?", "type": "benign"}
+{"text": "How do I run a SQL query with a parameterized input in Python?", "type": "benign"}
+{"text": "What is the difference between a GET and a POST request?", "type": "benign"}
+{"text": "How do I implement a simple queue using Python lists?", "type": "benign"}
+{"text": "Can you explain what WebSockets are?", "type": "benign"}
+{"text": "How do I add type hints to a Python function?", "type": "benign"}
+{"text": "What is the difference between a primary key and a unique key?", "type": "benign"}
+{"text": "How do I flatten a nested list in Python?", "type": "benign"}
+{"text": "Can you explain what a deadlock is in databases?", "type": "benign"}
+{"text": "How do I use Alembic for database migrations?", "type": "benign"}
+{"text": "What is the difference between a reverse proxy and a forward proxy?", "type": "benign"}
+{"text": "How do I write a generator function in Python?", "type": "benign"}
+{"text": "Can you explain the SOLID principles?", "type": "benign"}
+{"text": "How do I check the size of a file in Python?", "type": "benign"}
+{"text": "What is the difference between a library and a framework?", "type": "benign"}
+{"text": "How do I write a SQL query that returns the top 10 results?", "type": "benign"}
+{"text": "Can you explain what mocking is in testing?", "type": "benign"}
+{"text": "How do I send an email from a Python script?", "type": "benign"}
+{"text": "What is the difference between compilation and runtime errors?", "type": "benign"}
+{"text": "How do I chunk a large list in Python?", "type": "benign"}
+{"text": "Can you explain what eventual consistency means?", "type": "benign"}
+{"text": "How do I write a Python class with a custom __repr__?", "type": "benign"}
+{"text": "What is the difference between a hard link and a soft link in Linux?", "type": "benign"}
+{"text": "How do I install a specific version of a Python package?", "type": "benign"}
+{"text": "Can you explain what a content delivery network (CDN) does?", "type": "benign"}
+{"text": "How do I read environment variables in Python?", "type": "benign"}
+{"text": "What is the difference between a blocking and non-blocking I/O call?", "type": "benign"}
+{"text": "How do I write a simple middleware in Express.js?", "type": "benign"}
+{"text": "Can you explain what SSH key-based authentication is?", "type": "benign"}
+{"text": "How do I count occurrences of items in a list in Python?", "type": "benign"}
+{"text": "What is the difference between a session and a JWT token?", "type": "benign"}
+{"text": "How do I check disk usage on a Linux server?", "type": "benign"}
+{"text": "Can you explain what a pub/sub pattern is?", "type": "benign"}
+{"text": "How do I write a Python script to rename files in bulk?", "type": "benign"}
+{"text": "What is the difference between a patch and a minor version bump in semver?", "type": "benign"}
+{"text": "How do I tail a log file in real time?", "type": "benign"}
+{"text": "Can you explain what idempotency means in API design?", "type": "benign"}
+{"text": "How do I use Python to interact with an S3 bucket?", "type": "benign"}
