@@ -1,0 +1,41 @@
+name: Detection Eval
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Run eval (informational — no fail gate until corpus stabilizes)
+        id: eval
+        run: |
+          python -m pif.eval --compare-baseline --json > eval_result.json || echo "::warning::Eval returned non-zero (possible F1 regression — check eval output)"
+          cat eval_result.json
+        continue-on-error: true
+
+      - name: Run threshold sweep
+        run: python -m pif.eval --sweep --json > eval_sweep.json
+        continue-on-error: true
+
+      - name: Upload eval results
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: |
+            eval_result.json
+            eval_sweep.json
+        if: always()

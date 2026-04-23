@@ -15,7 +15,9 @@ _HEURISTIC_FAST_PATH = 0.65
 
 
 async def analyze(
-    messages: list[dict[str, Any]], threshold: float | None = None
+    messages: list[dict[str, Any]],
+    threshold: float | None = None,
+    corpus_path: str | None = None,
 ) -> DetectionResult:
     """
     Full detection pipeline. Called from the proxy per request.
@@ -45,7 +47,7 @@ async def analyze(
 
     # Layer 2: semantic (blocking, run in thread pool)
     loop = asyncio.get_running_loop()
-    s_result = await loop.run_in_executor(None, semantic.check, text, None)
+    s_result = await loop.run_in_executor(None, semantic.check, text, corpus_path)
 
     # Merge results — take max confidence, prefer heuristic attack_type when it matched
     combined_confidence = max(h_result.confidence, s_result.confidence)

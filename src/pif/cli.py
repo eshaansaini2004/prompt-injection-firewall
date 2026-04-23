@@ -162,5 +162,34 @@ def test(
     typer.echo(f"Latency:          {result.latency_ms}ms")
 
 
+@app.command()
+def eval(
+    threshold: float = typer.Option(None, help="Block threshold (default: settings.block_threshold)"),
+    test_ratio: float = typer.Option(0.2, help="Fraction of corpus held out for testing"),
+    seed: int = typer.Option(42, help="Random seed for split"),
+    sweep: bool = typer.Option(False, "--sweep", help="Sweep thresholds 0.30–0.95"),
+    save_baseline: bool = typer.Option(False, "--save-baseline", help="Save result as tests/eval_baseline.json"),
+    compare_baseline: bool = typer.Option(False, "--compare-baseline", help="Fail if F1 regresses vs baseline"),
+    json_output: bool = typer.Option(False, "--json", help="Output raw JSON"),
+) -> None:
+    """Run the detection eval harness against the corpus."""
+    import sys
+    from pif import eval as _eval
+    from pif.models import settings as _settings
+
+    exit_code = asyncio.run(
+        _eval._main(
+            threshold=threshold if threshold is not None else _settings.block_threshold,
+            test_ratio=test_ratio,
+            seed=seed,
+            do_sweep=sweep,
+            save_baseline_flag=save_baseline,
+            compare_baseline_flag=compare_baseline,
+            json_output=json_output,
+        )
+    )
+    raise typer.Exit(exit_code)
+
+
 if __name__ == "__main__":
     app()

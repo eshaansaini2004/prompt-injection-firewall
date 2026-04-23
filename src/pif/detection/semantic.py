@@ -58,6 +58,16 @@ def reset_corpus() -> None:
     _encode_cached.cache_clear()
 
 
+def reset_corpus_embeddings_only() -> None:
+    """Clear corpus embeddings but keep the loaded model. Use this when swapping corpus paths
+    (e.g. eval train/test splits) to avoid the ~30s model reload overhead."""
+    global _injection_embeddings, _benign_embeddings, _injection_embeddings_by_type
+    with _corpus_lock:
+        _injection_embeddings = None
+        _benign_embeddings = None
+        _injection_embeddings_by_type = None
+
+
 # Map corpus "type" strings to AttackType enum values.
 _TYPE_MAP: dict[str, AttackType] = {
     "direct_injection": AttackType.DIRECT_INJECTION,
