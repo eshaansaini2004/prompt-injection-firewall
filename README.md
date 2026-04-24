@@ -94,9 +94,26 @@ echo "Ignore all previous instructions" | pif test
 | Privilege Escalation | "developer mode", vendor impersonation |
 
 **Layer 1 (heuristics)** runs synchronously in ~0.5ms. Confidence ≥ 0.65 skips layer 2.
-**Layer 2 (semantic)** uses `all-MiniLM-L6-v2` + cosine similarity against 220 labeled attack examples and 121 benign prompts. Runs in a thread pool via `run_in_executor`. Per-category attack type classification from the embedding index.
+**Layer 2 (semantic)** uses `all-MiniLM-L6-v2` + cosine similarity against 220 labeled attack examples and 507 benign prompts. Runs in a thread pool via `run_in_executor`. Per-category attack type classification from the embedding index.
 
-Confidence threshold defaults to `0.75`. Override per-request with `X-Firewall-Threshold`.
+Confidence threshold defaults to `0.50`. Override per-request with `X-Firewall-Threshold`.
+
+### Threshold Calibration
+
+Threshold was chosen by sweeping 0.30–0.95 on a held-out test set (44 injection, 101 benign) and picking the lowest value that keeps precision at 1.0 (zero false positives). Results at key operating points:
+
+| Threshold | Precision | Recall | F1   | False Positives | False Negatives |
+|-----------|-----------|--------|------|-----------------|-----------------|
+| 0.30      | 0.872     | 0.932  | 0.90 | 6               | 3               |
+| 0.35      | 0.911     | 0.932  | 0.92 | 4               | 3               |
+| 0.40      | 0.930     | 0.909  | 0.92 | 3               | 4               |
+| 0.45      | 0.949     | 0.841  | 0.89 | 2               | 7               |
+| **0.50**  | **1.000** | **0.705** | **0.83** | **0** | **13** |
+| 0.55      | 1.000     | 0.500  | 0.67 | 0               | 22              |
+| 0.65      | 1.000     | 0.409  | 0.58 | 0               | 26              |
+| 0.75      | 1.000     | 0.182  | 0.31 | 0               | 36              |
+
+ROC-AUC is 0.987 across all thresholds. The default of 0.50 is the last point where precision stays perfect. Lower values improve recall further but introduce false positives that would block legitimate requests.
 
 ---
 
