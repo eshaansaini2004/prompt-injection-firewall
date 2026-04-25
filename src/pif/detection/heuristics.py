@@ -317,14 +317,32 @@ def check(text: str) -> DetectionResult:
 
 
 def extract_text_from_messages(messages: list[dict]) -> str:
-    """Pull all user/system text out of an OpenAI messages array."""
+    """Extract user and system message text from an OpenAI messages array.
+
+    Only user and system roles are analyzed — assistant turns are skipped because
+    injection attacks originate from user-controlled input, not the model's own
+    responses. Turn boundaries are marked with [TURN N] so escalation patterns
+    across a multi-turn conversation remain detectable as a sequence.
+    """
     parts = []
+    turn = 0
     for msg in messages:
+        role = msg.get("role", "")
+        if role not in ("user", "system"):
+            continue
+        turn += 1
         content = msg.get("content", "")
         if isinstance(content, str):
-            parts.append(content)
+            text = content
         elif isinstance(content, list):
-            for block in content:
-                if isinstance(block, dict) and block.get("type") == "text":
-                    parts.append(block.get("text", ""))
+            chunks = [
+                block.get("text", "")
+                for block in content
+                if isinstance(block, dict) and block.get("type") == "text"
+            ]
+            text = " ".join(chunks)
+        else:
+            text = ""
+        if text.strip():
+            parts.append(f"[TURN {turn}] {text}")
     return "\n\n".join(parts)
