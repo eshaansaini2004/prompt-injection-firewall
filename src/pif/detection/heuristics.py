@@ -4,6 +4,8 @@ Covers the most common injection patterns via regex + structural signals.
 """
 from __future__ import annotations
 
+import base64
+import codecs
 import math
 import re
 from collections import Counter
@@ -204,6 +206,40 @@ _HTML_COMMENT_INJECTION_RE = re.compile(
 )
 
 
+def _try_decode_base64(text: str) -> str | None:
+    """Find the first 40+ char base64 blob in text, decode it, return UTF-8 string or None."""
+    m = _BASE64_BLOB_RE.search(text)
+    if not m:
+        return None
+    blob = m.group(0)
+    padded = blob + "=" * ((-len(blob)) % 4)
+    try:
+        decoded = base64.b64decode(padded).decode("utf-8")
+        return decoded if len(decoded) >= 4 else None
+    except Exception:
+        return None
+
+
+def _run_all_patterns(text: str) -> tuple[list[tuple[AttackType, str]], list[str]]:
+    """Run many-shot and _PATTERNS on text. Returns (matched, agentic_matched).
+    Does NOT include the base64 blob check — used for checking decoded variants."""
+    matched: list[tuple[AttackType, str]] = []
+    agentic_matched: list[str] = []
+
+    qa = _count_qa_pairs(text)
+    if qa > 5:
+        matched.append((AttackType.MANY_SHOT, f"qa_pairs_count={qa}"))
+
+    for attack_type, pattern_name, pattern in _PATTERNS:
+        if pattern.search(text):
+            if attack_type == AttackType.AGENTIC_INJECTION:
+                agentic_matched.append(pattern_name)
+            else:
+                matched.append((attack_type, pattern_name))
+
+    return matched, agentic_matched
+
+
 def _count_qa_pairs(text: str) -> int:
     return len(re.findall(r"(^|\n)\s*Q\s*:\s*.+\n\s*A\s*:\s*.+", text, re.MULTILINE))
 
@@ -234,7 +270,7 @@ def check(text: str) -> DetectionResult:
     """Run all heuristic checks. Returns on first confident match."""
     matched: list[tuple[AttackType, str]] = []
 
-    # Unicode hidden chars — instant flag
+    # Unicode hidden chars — presence alone is suspicious (hidden text channel)
     if _UNICODE_TAG_RE.search(text):
         return DetectionResult(
             is_injection=True,
@@ -264,8 +300,44 @@ def check(text: str) -> DetectionResult:
             layer_triggered=1,
         )
 
-    # Base64 blob
-    if _BASE64_BLOB_RE.search(text):
+    # Decode pre-pass: base64
+    # If a blob decodes to valid UTF-8 and the decoded text hits patterns, flag as obfuscation.
+    # This catches payloads sent without "decode this" keywords.
+    b64_decoded = _try_decode_base64(text)
+    if b64_decoded:
+        b64_matched, b64_agentic = _run_all_patterns(b64_decoded)
+        if b64_matched or b64_agentic:
+            n = len(b64_matched) + len(b64_agentic)
+            patterns = [f"base64:{p}" for _, p in b64_matched] + [f"base64:{p}" for p in b64_agentic]
+            return DetectionResult(
+                is_injection=True,
+                confidence=min(0.65 + 0.08 * n, 0.92),
+                attack_type=AttackType.OBFUSCATION,
+                matched_patterns=patterns,
+                layer_triggered=1,
+            )
+
+    # Decode pre-pass: ROT13
+    # Only flag if the decoded variant hits patterns but the original doesn't — avoids
+    # double-counting and eliminates the (rare) case where ROT13 of benign text matches.
+    rot_decoded = codecs.decode(text, "rot_13")
+    rot_matched, rot_agentic = _run_all_patterns(rot_decoded)
+    if rot_matched or rot_agentic:
+        orig_matched, _ = _run_all_patterns(text)
+        if not orig_matched:
+            n = len(rot_matched) + len(rot_agentic)
+            patterns = [f"rot13:{p}" for _, p in rot_matched] + [f"rot13:{p}" for p in rot_agentic]
+            return DetectionResult(
+                is_injection=True,
+                confidence=min(0.65 + 0.08 * n, 0.92),
+                attack_type=AttackType.OBFUSCATION,
+                matched_patterns=patterns,
+                layer_triggered=1,
+            )
+
+    # Base64 blob present but decode failed (binary data, wrong encoding) — weak signal.
+    # Skip if decode succeeded and was clean; that's handled by the pre-pass above.
+    if b64_decoded is None and _BASE64_BLOB_RE.search(text):
         matched.append((AttackType.OBFUSCATION, "base64_blob"))
 
     # Many-shot: >5 Q/A pairs is sus
