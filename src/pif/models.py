@@ -14,7 +14,9 @@ class Settings(BaseSettings):
     upstream_llm_url: str = "https://api.openai.com/v1"
     upstream_api_key: str = ""
     corpus_path: str = "src/pif/detection/corpus"
-    block_threshold: float = 0.75
+    # 0.50 chosen from ROC sweep (see README §Threshold Calibration):
+    # last threshold with precision=1.0 while maximising recall (0.70 vs 0.18 at 0.75).
+    block_threshold: float = 0.50
     store_payloads: bool = False
     max_request_size_bytes: int = 1_048_576
     dashboard_api_key: str | None = None
