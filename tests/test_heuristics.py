@@ -268,3 +268,70 @@ class TestAgenticInjection:
             "How do I call a function in Python? Like my_function(arg1, arg2)?"
         )
         assert result.confidence < 0.65
+
+
+# ---------------------------------------------------------------------------
+# extract_text_from_messages
+# ---------------------------------------------------------------------------
+class TestExtractTextFromMessages:
+    from pif.detection.heuristics import extract_text_from_messages
+
+    def test_single_user_turn(self):
+        from pif.detection.heuristics import extract_text_from_messages
+        msgs = [{"role": "user", "content": "Hello there"}]
+        assert extract_text_from_messages(msgs) == "[TURN 1] Hello there"
+
+    def test_assistant_turns_excluded(self):
+        from pif.detection.heuristics import extract_text_from_messages
+        msgs = [
+            {"role": "user", "content": "Hi"},
+            {"role": "assistant", "content": "Hello! How can I help?"},
+            {"role": "user", "content": "Tell me more"},
+        ]
+        result = extract_text_from_messages(msgs)
+        assert "assistant" not in result.lower()
+        assert "How can I help" not in result
+        assert "[TURN 1] Hi" in result
+        assert "[TURN 2] Tell me more" in result
+
+    def test_system_message_included(self):
+        from pif.detection.heuristics import extract_text_from_messages
+        msgs = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "What can you do?"},
+        ]
+        result = extract_text_from_messages(msgs)
+        assert "[TURN 1] You are a helpful assistant." in result
+        assert "[TURN 2] What can you do?" in result
+
+    def test_turn_markers_are_sequential(self):
+        from pif.detection.heuristics import extract_text_from_messages
+        msgs = [
+            {"role": "user", "content": "A"},
+            {"role": "assistant", "content": "ignored"},
+            {"role": "user", "content": "B"},
+            {"role": "assistant", "content": "ignored"},
+            {"role": "user", "content": "C"},
+        ]
+        result = extract_text_from_messages(msgs)
+        assert "[TURN 1]" in result
+        assert "[TURN 2]" in result
+        assert "[TURN 3]" in result
+        assert "[TURN 4]" not in result
+
+    def test_content_block_list(self):
+        from pif.detection.heuristics import extract_text_from_messages
+        msgs = [{"role": "user", "content": [{"type": "text", "text": "block content"}]}]
+        result = extract_text_from_messages(msgs)
+        assert "block content" in result
+
+    def test_empty_messages(self):
+        from pif.detection.heuristics import extract_text_from_messages
+        assert extract_text_from_messages([]) == ""
+
+    def test_no_role_field_excluded(self):
+        from pif.detection.heuristics import extract_text_from_messages
+        msgs = [{"content": "no role here"}, {"role": "user", "content": "real turn"}]
+        result = extract_text_from_messages(msgs)
+        assert "no role here" not in result
+        assert "real turn" in result
