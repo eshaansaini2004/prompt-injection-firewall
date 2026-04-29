@@ -88,13 +88,13 @@ echo "Ignore all previous instructions" | pif test
 | Obfuscation | base64, unicode tag block, ROT13 |
 | Many-Shot Priming | repeated Q:/A: pairs |
 | Agentic / Tool-Use Injection | fake `{"function": ...}` calls, `<tool_result>` tag poisoning |
-| Adversarial Suffixes (GCG) | token-level gibberish suffixes, high-entropy character clusters |
+| Adversarial Suffixes (GCG) | token-level gibberish suffixes — detected via entropy (>4.5 bits/char) and repeated punctuation clusters |
 | Multi-Turn Crescendo | gradual escalation across turns |
 | Multimodal Injection | hidden text in images |
 | Privilege Escalation | "developer mode", vendor impersonation |
 
 **Layer 1 (heuristics)** runs synchronously in ~0.5ms. Confidence ≥ 0.65 skips layer 2.
-**Layer 2 (semantic)** uses `all-MiniLM-L6-v2` + cosine similarity against 220 labeled attack examples and 507 benign prompts. Runs in a thread pool via `run_in_executor`. Per-category attack type classification from the embedding index.
+**Layer 2 (semantic)** uses `all-MiniLM-L6-v2` + cosine similarity against 241 labeled attack examples and 507 benign prompts. Runs in a thread pool via `run_in_executor`. Per-category attack type classification from the embedding index.
 
 Confidence threshold defaults to `0.50`. Override per-request with `X-Firewall-Threshold`.
 
@@ -114,6 +114,19 @@ Threshold was chosen by sweeping 0.30–0.95 on a held-out test set (44 injectio
 | 0.75      | 1.000     | 0.182  | 0.31 | 0               | 36              |
 
 ROC-AUC is 0.987 across all thresholds. The default of 0.50 is the last point where precision stays perfect. Lower values improve recall further but introduce false positives that would block legitimate requests.
+
+### Known Limitations: GCG Adversarial Suffixes
+
+GCG (Greedy Coordinate Gradient) attacks from Zou et al. 2023 append optimized token sequences to otherwise normal prompts to manipulate model behavior. Detection in PIF relies on two statistical heuristics:
+
+1. **Entropy check** — a 30-character sliding window with Shannon entropy > 4.5 bits/char and > 55% non-alphanumeric characters triggers `ADVERSARIAL_SUFFIX` at confidence 0.85.
+2. **Repeated token clusters** — five or more consecutive unusual punctuation tokens (`! ! ! ! !`, `} } } { }`) trigger the same category.
+
+**What these catch:** high-entropy gibberish suffixes, repeated token sequences, and GCG outputs that produce statistical anomalies. Measured recall on the test corpus is **1.00 (2/2 adversarial\_suffix examples in the held-out split)**.
+
+**What they miss:** GCG suffixes specifically optimized to stay below the entropy threshold or avoid token repetition. An adversary who white-box attacks the entropy check can craft a suffix that reads as moderate-entropy text while still transferring adversarially. The semantic layer provides no additional defense here — GCG suffixes lack the natural-language semantics that cosine similarity relies on.
+
+This is a fundamental constraint: statistical heuristics catch GCG in practice because real-world GCG outputs are high-entropy, but they offer no guarantee against a targeted adversary who can probe the detector. Robust GCG defense would require perplexity filtering (using a separate language model to score token sequences) or input smoothing, both out of scope for this project.
 
 ---
 
@@ -191,7 +204,7 @@ src/pif/
     ├── heuristics.py   # Regex + structural checks + GCG entropy, synchronous
     ├── semantic.py     # Embedding similarity, LRU cache, per-category classification
     └── corpus/
-        ├── injections.jsonl   # 220 labeled attack examples (14 categories)
+        ├── injections.jsonl   # 241 labeled attack examples (14 categories)
         └── benign.jsonl       # 121 benign prompts
 
 dashboard/              # Next.js app (App Router)
