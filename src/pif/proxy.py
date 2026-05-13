@@ -57,7 +57,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await db.init_db()
     db.start_broadcast_loop()
     # Warm up the semantic layer in a thread pool so it's ready for the first request
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     try:
         await loop.run_in_executor(None, _warm_up_semantic)
         logger.info("semantic layer ready")
@@ -312,7 +312,15 @@ async def health() -> dict[str, str]:
 
 
 def _messages_to_text(messages: list[dict[str, Any]]) -> str:
-    return "\n".join(
-        m.get("content", "") if isinstance(m.get("content"), str) else ""
-        for m in messages
-    )
+    parts = []
+    for m in messages:
+        content = m.get("content", "")
+        if isinstance(content, str):
+            parts.append(content)
+        elif isinstance(content, list):
+            parts.extend(
+                block["text"]
+                for block in content
+                if isinstance(block, dict) and block.get("type") == "text" and block.get("text")
+            )
+    return "\n".join(parts)
