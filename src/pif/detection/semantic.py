@@ -8,6 +8,7 @@ import functools
 import json
 import threading
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -41,7 +42,7 @@ def _encode_cached(text: str) -> np.ndarray:
     return _get_model().encode(text, convert_to_numpy=True, normalize_embeddings=True)
 
 
-def cache_info() -> functools.lru_cache:  # type: ignore[type-arg]
+def cache_info() -> Any:
     """Expose LRU cache stats for CLI/stats endpoints."""
     return _encode_cached.cache_info()
 

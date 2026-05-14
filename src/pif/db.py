@@ -53,7 +53,6 @@ async def init_db() -> None:
         await conn.run_sync(Base.metadata.create_all)
 
 
-
 async def log_event(
     result: DetectionResult,
     payload: str,
