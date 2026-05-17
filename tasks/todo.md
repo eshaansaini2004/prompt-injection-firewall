@@ -1,61 +1,66 @@
 # PIF — Todo
 
+Audited 2026-05-17. Most of the original list shipped between March and May; what's
+left below is what a `grep` of the source actually confirms is missing.
+
 ## Detection
 
-- [ ] **Entropy scoring + GCG adversarial suffix patterns**
-  Implement entropy scoring in `heuristics.py`. Add heuristic patterns for GCG-style token gibberish (high Shannon entropy, unusual char distribution). The enum exists, zero patterns do.
+- [x] **Entropy scoring + GCG adversarial suffix patterns** — `_check_gcg_entropy` in
+  `heuristics.py`, plus corpus examples from Zou et al. 2023.
+- [x] **Agentic / tool-use injection patterns** — four pattern groups in `heuristics.py`.
+- [x] **Multi-turn crescendo detection** — `extract_text_from_messages` passes turn
+  markers through, engine sees the whole conversation.
 
-- [ ] **Agentic / tool-use injection patterns**
-  Add heuristics for function-calling attacks — JSON-embedded instruction injection, tool result poisoning, `{"function": ...}` hijacking patterns.
-
-- [ ] **Multi-turn crescendo detection**
-  Pass conversation history through the engine and check for escalation gradient across turns. Engine currently only sees the latest message.
+- [ ] **Attack type classification in semantic layer**
+  Semantic hits still always return `DIRECT_INJECTION`. The corpus records carry a
+  `type` field that the index throws away. Keep it, vote over the k nearest.
 
 ## Semantic Layer
 
-- [ ] **Expand corpus: 50→300 injections, 30→150 benign**
-  More examples = better recall. Covers edge cases the current 50 don't. Run `pif reindex` after.
+- [x] **Expand corpus: 50→300 injections, 30→150 benign** — now 356 / 507.
+- [x] **Embedding cache** — `functools.lru_cache(maxsize=512)` on `_encode_cached`.
 
-- [ ] **Embedding cache**
-  Cache embeddings in memory keyed on input hash. Cuts semantic latency ~80% for repeated or similar inputs. Simple LRU, no external deps.
-
-- [ ] **Attack type classification in semantic layer**
-  Semantic hits always return `DIRECT_INJECTION`. Use per-category subcorpora or a lightweight classifier on top of the similarity score to return the real attack type.
+- [ ] **Index staleness warning**
+  Reindex is manual and silent. If a corpus file is newer than the built index, say so
+  at startup instead of scoring against a stale one.
 
 ## Testing
 
-- [ ] **test_engine.py — orchestration coverage**
-  Fast-path logic, threshold merging, layer selection, empty input handling. Currently zero coverage on the thing that ties everything together.
-
-- [ ] **Streaming response tests**
-  The streaming path in `proxy.py` is entirely untested. Mock the upstream and verify chunked SSE responses flow through correctly.
+- [x] **test_engine.py — orchestration coverage** — 23 tests.
+- [x] **Streaming response tests** — three in `test_proxy.py` covering SSE passthrough,
+  pre-upstream block, and upstream error.
 
 - [ ] **End-to-end integration tests (no mocks)**
-  Run both detection layers together against known attack/benign inputs and assert on final block/pass decision.
+  Everything currently stubs the detection result. Nothing runs both layers together
+  and asserts on the real block/pass decision.
+
+- [ ] **Per-category heuristic coverage**
+  `test_heuristics.py` is heavy on direct injection and obfuscation, thin on the other
+  ten categories. Recall regressions there would go unnoticed.
+
+- [ ] **False-positive guard suite**
+  The benign corpus is large but untested as a suite. Near-miss prompts (security
+  questions, prompt-engineering discussion) are the ones that will break precision.
 
 ## Infrastructure
 
-- [ ] **Docker setup**
-  `Dockerfile` for the backend + `docker-compose.yml` wiring backend + dashboard. Makes local dev and deployment non-painful.
+- [x] **Docker setup** — `Dockerfile` + `docker-compose.yml`.
+- [x] **Rate limiting** — `slowapi`, per-IP, `settings.rate_limit`.
 
-- [ ] **Rate limiting**
-  Semantic checks run in a thread pool — sustained traffic can saturate it. Add per-IP or per-API-key rate limiting via `slowapi` or middleware.
+- [ ] **CI gate on lint, types, and tests**
+  `.github/workflows/eval.yml` runs the eval and nothing else. `ruff` and `mypy` both
+  fail on `master` right now and CI is happy about it.
 
 ## CLI
 
-- [ ] **`pif test` command**
-  Pipe a prompt in, get detection result back. Essential for validating corpus changes without spinning up the proxy. Should show confidence, attack type, layer, matched patterns.
+- [x] **`pif test` command** — takes a prompt, prints confidence and attack type.
 
-- [ ] **`pif reindex` hooked to corpus changes**
-  Right now reindex is manual. Add a file watcher option or at minimum a startup check that warns if corpus files are newer than the index.
+- [ ] **`pif test` should show which patterns matched per layer**
+  Right now it prints the verdict without the evidence, which makes corpus debugging
+  guesswork.
 
 ## Dashboard
 
-- [ ] **Event detail / payload inspection**
-  Click an event and see the full payload, matched patterns, confidence breakdown. Currently you can only see the feed summary.
-
-- [ ] **Configurable time window on chart**
-  1h / 6h / 24h / 7d selector on the timeline chart.
-
-- [ ] **Log export**
-  Download filtered events as CSV or JSON for offline analysis.
+- [x] **Event detail / payload inspection** — `EventDetailPanel.tsx`.
+- [x] **Configurable time window on chart** — 1h / 6h / 24h / 7d.
+- [x] **Log export** — CSV/JSON download.
