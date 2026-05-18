@@ -173,7 +173,6 @@ def eval(
     json_output: bool = typer.Option(False, "--json", help="Output raw JSON"),
 ) -> None:
     """Run the detection eval harness against the corpus."""
-    import sys
     from pif import eval as _eval
     from pif.models import settings as _settings
 
