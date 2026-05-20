@@ -4,9 +4,7 @@ Heuristics and semantic layers are mocked — these test engine.py logic only.
 """
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from pif.detection import engine
 from pif.models import AttackType, DetectionResult
