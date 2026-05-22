@@ -1,12 +1,13 @@
 """
 Proxy endpoint tests. Semantic layer is mocked — these test the proxy logic.
 """
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from httpx import AsyncClient, ASGITransport
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from pif.proxy import app
+import pytest
+from httpx import ASGITransport, AsyncClient
+
 from pif.models import AttackType, DetectionResult
+from pif.proxy import app
 
 
 @pytest.fixture

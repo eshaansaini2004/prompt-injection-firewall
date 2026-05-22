@@ -6,6 +6,7 @@ import base64
 import codecs
 
 import pytest
+
 from pif.detection.heuristics import check
 from pif.models import AttackType
 

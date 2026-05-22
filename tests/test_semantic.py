@@ -5,6 +5,7 @@ Run with: pytest tests/test_semantic.py -v
 Skip with: pytest -m "not slow"
 """
 import pytest
+
 from pif.detection import semantic
 from pif.detection.semantic import _load_corpus
 from pif.models import AttackType, settings
