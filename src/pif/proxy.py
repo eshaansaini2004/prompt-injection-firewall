@@ -89,7 +89,13 @@ app.add_middleware(
     allow_origins=settings.cors_allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "X-Firewall-Mode", "X-Firewall-Threshold", "X-Session-Id"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type",
+        "X-Firewall-Mode",
+        "X-Firewall-Threshold",
+        "X-Session-Id",
+    ],
 )
 
 _http_client = httpx.AsyncClient(timeout=60.0)
