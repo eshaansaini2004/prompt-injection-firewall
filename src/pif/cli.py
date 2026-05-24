@@ -151,7 +151,11 @@ def test(
         typer.echo(result.model_dump_json(indent=2))
         return
 
-    verdict = typer.style("BLOCKED", fg=typer.colors.RED, bold=True) if result.is_injection else typer.style("ALLOWED", fg=typer.colors.GREEN, bold=True)
+    verdict = (
+        typer.style("BLOCKED", fg=typer.colors.RED, bold=True)
+        if result.is_injection
+        else typer.style("ALLOWED", fg=typer.colors.GREEN, bold=True)
+    )
     patterns = ", ".join(result.matched_patterns) if result.matched_patterns else "none"
 
     typer.echo(f"Result:           {verdict}")
