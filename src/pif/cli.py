@@ -168,12 +168,18 @@ def test(
 
 @app.command()
 def eval(
-    threshold: float = typer.Option(None, help="Block threshold (default: settings.block_threshold)"),
+    threshold: float = typer.Option(
+        None, help="Block threshold (default: settings.block_threshold)"
+    ),
     test_ratio: float = typer.Option(0.2, help="Fraction of corpus held out for testing"),
     seed: int = typer.Option(42, help="Random seed for split"),
     sweep: bool = typer.Option(False, "--sweep", help="Sweep thresholds 0.30–0.95"),
-    save_baseline: bool = typer.Option(False, "--save-baseline", help="Save result as tests/eval_baseline.json"),
-    compare_baseline: bool = typer.Option(False, "--compare-baseline", help="Fail if F1 regresses vs baseline"),
+    save_baseline: bool = typer.Option(
+        False, "--save-baseline", help="Save result as tests/eval_baseline.json"
+    ),
+    compare_baseline: bool = typer.Option(
+        False, "--compare-baseline", help="Fail if F1 regresses vs baseline"
+    ),
     json_output: bool = typer.Option(False, "--json", help="Output raw JSON"),
 ) -> None:
     """Run the detection eval harness against the corpus."""
