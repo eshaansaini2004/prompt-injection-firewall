@@ -253,7 +253,10 @@ def _char_entropy(text: str) -> float:
 
 
 def _check_gcg_entropy(text: str) -> bool:
-    """Detect GCG-style suffix: 30+ char window with high entropy (>4.5 bits) AND >55% non-alphanumeric characters."""
+    """
+    Detect GCG-style suffix: a 30+ char window with high entropy (>4.5 bits) and
+    more than 55% non-alphanumeric characters.
+    """
     window = 30
     if len(text) < window:
         return False
