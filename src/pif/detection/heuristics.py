@@ -311,7 +311,9 @@ def check(text: str) -> DetectionResult:
         b64_matched, b64_agentic = _run_all_patterns(b64_decoded)
         if b64_matched or b64_agentic:
             n = len(b64_matched) + len(b64_agentic)
-            patterns = [f"base64:{p}" for _, p in b64_matched] + [f"base64:{p}" for p in b64_agentic]
+            patterns = [f"base64:{p}" for _, p in b64_matched] + [
+                f"base64:{p}" for p in b64_agentic
+            ]
             return DetectionResult(
                 is_injection=True,
                 confidence=min(0.65 + 0.08 * n, 0.92),
