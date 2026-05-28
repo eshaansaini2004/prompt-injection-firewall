@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import functools
 import json
+import logging
 import threading
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,8 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from pif.models import AttackType, DetectionResult, settings
+
+log = logging.getLogger(__name__)
 
 _model: SentenceTransformer | None = None
 _injection_embeddings: np.ndarray | None = None
@@ -100,9 +103,6 @@ def _load_corpus(corpus_path: str) -> tuple[np.ndarray, np.ndarray]:
         if _injection_embeddings is not None and _benign_embeddings is not None:
             return _injection_embeddings, _benign_embeddings
 
-        import logging as _logging
-        _log = _logging.getLogger(__name__)
-
         model = _get_model()
         path = Path(corpus_path)
 
@@ -122,7 +122,7 @@ def _load_corpus(corpus_path: str) -> tuple[np.ndarray, np.ndarray]:
                     try:
                         obj = json.loads(line)
                     except json.JSONDecodeError:
-                        _log.warning("injections.jsonl line %d: invalid JSON, skipping", i)
+                        log.warning("injections.jsonl line %d: invalid JSON, skipping", i)
                         continue
                     text = obj.get("text", "")
                     if not text:
@@ -143,7 +143,7 @@ def _load_corpus(corpus_path: str) -> tuple[np.ndarray, np.ndarray]:
                     try:
                         obj = json.loads(line)
                     except json.JSONDecodeError:
-                        _log.warning("benign.jsonl line %d: invalid JSON, skipping", i)
+                        log.warning("benign.jsonl line %d: invalid JSON, skipping", i)
                         continue
                     text = obj.get("text", "")
                     if text:
@@ -184,8 +184,7 @@ def _classify_attack_type(query_emb: np.ndarray) -> AttackType:
             sims = cosine_similarity(query_emb, embs)[0]
             score = float(np.max(sims))
         except Exception as exc:
-            import logging as _logging
-            _logging.getLogger(__name__).debug("classify_attack_type error for %s: %s", attack_type, exc)
+            log.debug("classify_attack_type error for %s: %s", attack_type, exc)
             continue
         if score > best_score:
             best_score = score
