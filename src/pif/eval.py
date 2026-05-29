@@ -120,7 +120,11 @@ def load_corpus(corpus_path: str) -> list[EvalExample]:
                 text = obj.get("text", "")
                 if text:
                     examples.append(
-                        EvalExample(text=text, label=True, attack_type=obj.get("type", "direct_injection"))
+                        EvalExample(
+                            text=text,
+                            label=True,
+                            attack_type=obj.get("type", "direct_injection"),
+                        )
                     )
 
     benign_file = path / "benign.jsonl"
