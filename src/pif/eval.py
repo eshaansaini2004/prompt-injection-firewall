@@ -302,6 +302,12 @@ async def sweep(
     return [(t, await evaluate(train, test, threshold=t)) for t in thresholds]
 
 
+def _error_cell(count: int) -> str:
+    """Red when we got one, green when the count is zero."""
+    color = "red" if count else "green"
+    return f"[{color}]{count}[/{color}]"
+
+
 def print_report(result: EvalResult) -> None:
     console.print()
     console.rule(f"[bold]PIF Eval — threshold={result.threshold}")
@@ -323,9 +329,9 @@ def print_report(result: EvalResult) -> None:
     metrics.add_row("Accuracy", f"{result.accuracy:.4f}")
     metrics.add_section()
     metrics.add_row("TP", str(result.tp))
-    metrics.add_row("FP", f"[{'red' if result.fp else 'green'}]{result.fp}[/{'red' if result.fp else 'green'}]")
+    metrics.add_row("FP", _error_cell(result.fp))
     metrics.add_row("TN", str(result.tn))
-    metrics.add_row("FN", f"[{'red' if result.fn else 'green'}]{result.fn}[/{'red' if result.fn else 'green'}]")
+    metrics.add_row("FN", _error_cell(result.fn))
     console.print(metrics)
     console.print()
 
