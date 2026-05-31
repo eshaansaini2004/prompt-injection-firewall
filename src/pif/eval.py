@@ -345,7 +345,12 @@ def print_report(result: EvalResult) -> None:
         type_table.add_column("Avg Conf", width=10)
 
         for attack_type, stats in sorted(result.per_type.items()):
-            recall_color = "green" if stats.recall >= 0.8 else ("yellow" if stats.recall >= 0.5 else "red")
+            if stats.recall >= 0.8:
+                recall_color = "green"
+            elif stats.recall >= 0.5:
+                recall_color = "yellow"
+            else:
+                recall_color = "red"
             type_table.add_row(
                 attack_type,
                 str(stats.total),
