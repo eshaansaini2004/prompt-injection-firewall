@@ -433,14 +433,17 @@ def compare_baseline(result: EvalResult) -> bool:
     if drop > _BASELINE_TOLERANCE:
         console.print(
             f"[red bold]REGRESSION:[/red bold] F1 dropped {drop:.4f} "
-            f"(baseline={baseline_f1:.4f}, current={result.f1:.4f}, tolerance={_BASELINE_TOLERANCE})"
+            f"(baseline={baseline_f1:.4f}, current={result.f1:.4f}, "
+            f"tolerance={_BASELINE_TOLERANCE})"
         )
         return False
 
     if drop > 0:
         console.print(f"[yellow]F1 down {drop:.4f} vs baseline (within tolerance)[/yellow]")
     else:
-        console.print(f"[green]F1 {result.f1:.4f} (+{-drop:.4f} vs baseline {baseline_f1:.4f})[/green]")
+        console.print(
+            f"[green]F1 {result.f1:.4f} (+{-drop:.4f} vs baseline {baseline_f1:.4f})[/green]"
+        )
 
     return True
 
