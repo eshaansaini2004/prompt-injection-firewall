@@ -477,7 +477,8 @@ async def _main(
 
     train, test = split(examples, test_ratio=test_ratio, seed=seed)
     console.print(
-        f"[dim]Split (seed={seed}): {len(train)} train, {len(test)} test ({test_ratio:.0%} held out)[/dim]"
+        f"[dim]Split (seed={seed}): {len(train)} train, {len(test)} test "
+        f"({test_ratio:.0%} held out)[/dim]"
     )
 
     if do_sweep:
@@ -521,7 +522,9 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--sweep", action="store_true", help="Sweep thresholds 0.30–0.95")
     parser.add_argument("--save-baseline", action="store_true", help="Save result as baseline")
-    parser.add_argument("--compare-baseline", action="store_true", help="Compare against saved baseline")
+    parser.add_argument(
+        "--compare-baseline", action="store_true", help="Compare against saved baseline"
+    )
     parser.add_argument("--json", action="store_true", help="Output raw JSON")
     args = parser.parse_args()
 
