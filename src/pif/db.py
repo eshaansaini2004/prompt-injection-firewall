@@ -8,9 +8,9 @@ import hashlib
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, func, select
+from sqlalchemy import DateTime, Text, func, select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from pif.models import (
     AttackEvent,
@@ -36,16 +36,16 @@ class Base(DeclarativeBase):
 class AttackEventRow(Base):
     __tablename__ = "attack_events"
 
-    id = Column(String, primary_key=True)
-    timestamp = Column(DateTime(timezone=True), nullable=False)
-    model = Column(String, nullable=True)
-    attack_type = Column(String, nullable=False)
-    confidence = Column(Float, nullable=False)
-    blocked = Column(Boolean, nullable=False)
-    payload_hash = Column(String, nullable=False)
-    payload_preview = Column(Text, nullable=True)
-    layer_triggered = Column(Integer, nullable=False)
-    latency_ms = Column(Float, nullable=False)
+    id: Mapped[str] = mapped_column(primary_key=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    model: Mapped[str | None]
+    attack_type: Mapped[str]
+    confidence: Mapped[float]
+    blocked: Mapped[bool]
+    payload_hash: Mapped[str]
+    payload_preview: Mapped[str | None] = mapped_column(Text)
+    layer_triggered: Mapped[int]
+    latency_ms: Mapped[float]
 
 
 async def init_db() -> None:
