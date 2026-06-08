@@ -178,14 +178,15 @@ async def get_attack_type_counts() -> list[AttackTypeCount]:
         result = await session.execute(
             select(
                 AttackEventRow.attack_type,
-                func.count(AttackEventRow.id).label("count"),
+                # Not labelled "count" — that shadows Row.count() and confuses type checkers.
+                func.count(AttackEventRow.id).label("event_count"),
             )
             .where(AttackEventRow.blocked.is_(True))
             .group_by(AttackEventRow.attack_type)
             .order_by(func.count(AttackEventRow.id).desc())
         )
         return [
-            AttackTypeCount(attack_type=AttackType(row.attack_type), count=row.count)
+            AttackTypeCount(attack_type=AttackType(row.attack_type), count=row.event_count)
             for row in result
         ]
 
