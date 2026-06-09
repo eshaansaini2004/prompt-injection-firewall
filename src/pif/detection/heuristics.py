@@ -9,6 +9,7 @@ import codecs
 import math
 import re
 from collections import Counter
+from typing import Any
 
 from pif.models import AttackType, DetectionResult
 
@@ -393,7 +394,7 @@ def check(text: str) -> DetectionResult:
     )
 
 
-def extract_text_from_messages(messages: list[dict]) -> str:
+def extract_text_from_messages(messages: list[dict[str, Any]]) -> str:
     """Extract user and system message text from an OpenAI messages array.
 
     Only user and system roles are analyzed — assistant turns are skipped because
