@@ -11,9 +11,13 @@ left below is what a `grep` of the source actually confirms is missing.
 - [x] **Multi-turn crescendo detection** — `extract_text_from_messages` passes turn
   markers through, engine sees the whole conversation.
 
-- [ ] **Attack type classification in semantic layer**
-  Semantic hits still always return `DIRECT_INJECTION`. The corpus records carry a
-  `type` field that the index throws away. Keep it, vote over the k nearest.
+- [x] **Attack type classification in semantic layer** — `_classify_attack_type` builds
+  per-category embedding matrices and returns the best-matching type. Correcting the
+  earlier audit entry: this shipped, it was never open.
+
+- [ ] **Classify by k-nearest vote, not single best match**
+  `_classify_attack_type` picks the category with the highest *single* similarity, so one
+  stray corpus line decides the label. Vote across the k nearest instead.
 
 ## Semantic Layer
 
