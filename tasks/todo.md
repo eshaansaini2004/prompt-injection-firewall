@@ -24,9 +24,11 @@ left below is what a `grep` of the source actually confirms is missing.
 - [x] **Expand corpus: 50→300 injections, 30→150 benign** — now 356 / 507.
 - [x] **Embedding cache** — `functools.lru_cache(maxsize=512)` on `_encode_cached`.
 
-- [ ] **Index staleness warning**
-  Reindex is manual and silent. If a corpus file is newer than the built index, say so
-  at startup instead of scoring against a stale one.
+- [ ] **`pif reindex` doesn't do what its name and the docs claim**
+  There is no on-disk index. `_load_corpus` embeds the corpus lazily into module globals
+  on first use, so every process rebuilds it at startup regardless. `pif reindex` warms
+  a cache that dies with the CLI process, and the "corpus changes require reindex"
+  gotcha in CLAUDE.md is wrong. Either persist an index or make the command honest.
 
 ## Testing
 
