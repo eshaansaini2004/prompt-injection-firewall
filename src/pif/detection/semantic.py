@@ -169,8 +169,17 @@ def _load_corpus(corpus_path: str) -> tuple[np.ndarray, np.ndarray]:
         return _injection_embeddings, _benign_embeddings
 
 
+# How many neighbours per category vote on the label. One stray corpus line
+# shouldn't decide the attack type on its own.
+_CLASSIFY_K = 3
+
+
 def _classify_attack_type(query_emb: np.ndarray) -> AttackType:
-    """Return the attack type with the highest max cosine similarity to query_emb."""
+    """
+    Return the attack type whose nearest examples match query_emb best.
+    Scores a category by the mean of its top-k similarities rather than its single
+    best hit, so one unusually close outlier can't carry a whole category.
+    """
     if not _injection_embeddings_by_type:
         return AttackType.DIRECT_INJECTION
 
@@ -182,7 +191,9 @@ def _classify_attack_type(query_emb: np.ndarray) -> AttackType:
             continue
         try:
             sims = cosine_similarity(query_emb, embs)[0]
-            score = float(np.max(sims))
+            k = min(_CLASSIFY_K, sims.shape[0])
+            # np.partition puts the k largest in the tail; cheaper than a full sort.
+            score = float(np.mean(np.partition(sims, -k)[-k:]))
         except Exception as exc:
             log.debug("classify_attack_type error for %s: %s", attack_type, exc)
             continue
