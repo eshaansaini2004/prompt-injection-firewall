@@ -4,6 +4,7 @@ These hit the real sentence-transformers model — mark slow to skip in CI.
 Run with: pytest tests/test_semantic.py -v
 Skip with: pytest -m "not slow"
 """
+import numpy as np
 import pytest
 
 from pif.detection import semantic
@@ -103,3 +104,48 @@ class TestAttackTypeForBenign:
     def test_attack_type_for_benign(self):
         result = semantic.check(BENIGN_TEXT, None)
         assert result.attack_type == AttackType.BENIGN
+
+
+# ---------------------------------------------------------------------------
+# Attack type classification — synthetic embeddings, no model needed
+# ---------------------------------------------------------------------------
+def _unit(*components: float) -> np.ndarray:
+    v = np.array(components, dtype=np.float64)
+    return v / np.linalg.norm(v)
+
+
+class TestClassifyAttackType:
+    def test_no_corpus_falls_back_to_direct_injection(self, monkeypatch):
+        monkeypatch.setattr(semantic, "_injection_embeddings_by_type", None)
+        assert semantic._classify_attack_type(_unit(1, 0).reshape(1, -1)) == (
+            AttackType.DIRECT_INJECTION
+        )
+
+    def test_consistent_category_beats_single_outlier(self, monkeypatch):
+        """
+        PROMPT_LEAKING has one example that is nearly identical to the query.
+        RAG_POISONING has three that are all merely close. Averaging the top-k
+        should pick RAG_POISONING; picking the single best match would not.
+        """
+        query = _unit(1.0, 0.0).reshape(1, -1)
+        by_type = {
+            AttackType.PROMPT_LEAKING: np.vstack(
+                [_unit(1.0, 0.02), _unit(0.2, 1.0), _unit(0.1, 1.0)]
+            ),
+            AttackType.RAG_POISONING: np.vstack(
+                [_unit(1.0, 0.30), _unit(1.0, 0.32), _unit(1.0, 0.34)]
+            ),
+        }
+        monkeypatch.setattr(semantic, "_injection_embeddings_by_type", by_type)
+
+        assert semantic._classify_attack_type(query) == AttackType.RAG_POISONING
+
+    def test_category_with_fewer_examples_than_k_still_scores(self, monkeypatch):
+        query = _unit(1.0, 0.0).reshape(1, -1)
+        by_type = {
+            AttackType.MANY_SHOT: np.vstack([_unit(1.0, 0.01)]),  # single example
+            AttackType.OBFUSCATION: np.vstack([_unit(0.0, 1.0), _unit(0.1, 1.0)]),
+        }
+        monkeypatch.setattr(semantic, "_injection_embeddings_by_type", by_type)
+
+        assert semantic._classify_attack_type(query) == AttackType.MANY_SHOT
