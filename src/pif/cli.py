@@ -58,7 +58,14 @@ def check_corpus() -> None:
 
 @app.command()
 def reindex() -> None:
-    """Rebuild the semantic embedding index from the corpus files."""
+    """
+    Rebuild the semantic embedding index and report its size and build time.
+
+    The index lives in module globals, not on disk, so this rebuild dies with the CLI
+    process. A running server rebuilds its own on first request either way. Use this to
+    check that corpus edits load cleanly and to see what they cost, not to publish an
+    index for something else to pick up.
+    """
     import time
     from pathlib import Path
 
@@ -82,6 +89,9 @@ def reindex() -> None:
         f"[green]Done in {elapsed:.1f}s — "
         f"{len(inj_embs)} injection embeddings, "
         f"{len(benign_embs)} benign embeddings[/green]"
+    )
+    console.print(
+        "[dim]Index is in-memory only — a running server rebuilds its own on startup.[/dim]"
     )
 
 
