@@ -133,7 +133,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ## Gotchas
 
-**Corpus changes require reindex.** Adding/editing files in `detection/corpus/` does nothing until you run `python -m pif.cli reindex`. The semantic layer will use a stale or missing index otherwise.
+**The semantic index is in-memory, not on disk.** `semantic._load_corpus` embeds the corpus into module globals on first use, so every process builds its own. Corpus edits take effect on the next server restart — there is no index file to go stale. `python -m pif.cli reindex` validates the corpus and reports build time; it does not publish anything for another process to load. A long-running server will not pick up corpus edits until it restarts.
 
 **`db.py` owns the database.** No SQLAlchemy sessions or raw queries anywhere else. New queries go in `db.py`.
 
