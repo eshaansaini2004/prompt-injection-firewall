@@ -68,7 +68,8 @@ uvicorn pif.proxy:app --reload --port 8000
 # or
 python -m pif.cli serve
 
-# Re-index corpus after adding attack examples
+# Validate corpus and time an index rebuild after adding attack examples
+# (in-memory only — restart the server for edits to take effect)
 python -m pif.cli reindex
 
 # Run tests
