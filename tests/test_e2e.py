@@ -33,3 +33,23 @@ class TestDirectInjectionBlocked:
         assert allowed.is_injection is False
         # Same input, same evidence — only the verdict moves.
         assert blocked.confidence == allowed.confidence
+
+
+class TestBenignPassesThrough:
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "What's the capital of France?",
+            "Can you help me write a Python function to sort a list?",
+            "Summarise this quarterly report in three bullet points.",
+            "Explain the difference between TCP and UDP.",
+            "What should I cook with chicken thighs and rice?",
+        ],
+    )
+    async def test_ordinary_prompts_are_not_blocked(self, text: str) -> None:
+        result = await engine.analyze(_user(text))
+        assert result.is_injection is False, (
+            f"False positive on {text!r}: confidence {result.confidence}, "
+            f"matched {result.matched_patterns}"
+        )
+        assert result.attack_type == AttackType.BENIGN
