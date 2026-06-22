@@ -207,18 +207,31 @@ _HTML_COMMENT_INJECTION_RE = re.compile(
 )
 
 
-def _try_decode_base64(text: str) -> str | None:
-    """Find the first 40+ char base64 blob in text, decode it, return UTF-8 string or None."""
-    m = _BASE64_BLOB_RE.search(text)
-    if not m:
-        return None
-    blob = m.group(0)
+def _decode_blob(blob: str) -> str | None:
+    """Decode one base64 blob to UTF-8, or None if it isn't decodable text."""
     padded = blob + "=" * ((-len(blob)) % 4)
     try:
         decoded = base64.b64decode(padded).decode("utf-8")
-        return decoded if len(decoded) >= 4 else None
     except Exception:
         return None
+    return decoded if len(decoded) >= 4 else None
+
+
+def _try_decode_base64(text: str) -> str | None:
+    """Find the first 40+ char base64 blob in text, decode it, return UTF-8 string or None."""
+    m = _BASE64_BLOB_RE.search(text)
+    return _decode_blob(m.group(0)) if m else None
+
+
+def decode_base64_blobs(text: str) -> str:
+    """
+    Replace every decodable base64 blob with its plaintext, leaving the rest untouched.
+
+    The semantic layer needs this: to an embedder one base64 blob looks much like any
+    other regardless of what it decodes to, so encoded benign content lands right next
+    to the encoded attacks in the corpus. Scoring the plaintext fixes that.
+    """
+    return _BASE64_BLOB_RE.sub(lambda m: _decode_blob(m.group(0)) or m.group(0), text)
 
 
 def _run_all_patterns(text: str) -> tuple[list[tuple[AttackType, str]], list[str]]:

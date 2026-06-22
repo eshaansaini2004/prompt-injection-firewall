@@ -45,9 +45,12 @@ async def analyze(
         h_result.is_injection = h_result.confidence >= block_threshold
         return h_result
 
-    # Layer 2: semantic (blocking, run in thread pool)
+    # Layer 2: semantic (blocking, run in thread pool).
+    # Score decoded text — raw base64 blobs all look alike to the embedder and drag
+    # benign encoded content into the obfuscation cluster.
     loop = asyncio.get_running_loop()
-    s_result = await loop.run_in_executor(None, semantic.check, text, corpus_path)
+    semantic_text = heuristics.decode_base64_blobs(text)
+    s_result = await loop.run_in_executor(None, semantic.check, semantic_text, corpus_path)
 
     # Merge results — take max confidence, prefer heuristic attack_type when it matched
     combined_confidence = max(h_result.confidence, s_result.confidence)
