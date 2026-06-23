@@ -79,3 +79,17 @@ class TestObfuscationSurvivesTheFullPipeline:
 
         assert result.is_injection is True
         assert result.attack_type == AttackType.OBFUSCATION
+
+    async def test_base64_of_benign_text_still_passes(self) -> None:
+        """
+        Regression: the embedder used to score the raw blob, which sits next to the
+        encoded attacks in the corpus, so any base64 at all read as obfuscation.
+        """
+        legit = base64.b64encode(
+            b"This is a normal photo description of a mountain landscape at sunset."
+        ).decode()
+        result = await engine.analyze(_user(f"Here is the encoded description: {legit}"))
+
+        assert result.is_injection is False, (
+            f"False positive on benign base64: confidence {result.confidence}"
+        )
