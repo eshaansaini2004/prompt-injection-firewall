@@ -192,6 +192,22 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
             re.IGNORECASE,
         ),
     ),
+    # Most real tool-use attacks are plain English, not JSON. Asking an agent to use a
+    # tool is ordinary, so this needs the sensitive target too — all three lookaheads
+    # must hit before it fires, which keeps "use the search tool" from tripping it.
+    (
+        AttackType.AGENTIC_INJECTION,
+        "tool_use_on_sensitive_target",
+        re.compile(
+            r"(?=.*\b(?:use|call|invoke|run|execute|using)\b)"
+            r"(?=.*\b(?:tool|function|api|code interpreter|plugin)s?\b)"
+            r"(?=.*(?:exfiltrat|/etc/passwd|address book|contact list|"
+            r"conversation history|chat history|admin panel|keylogger|credential|"
+            r"api[ _-]?key|password|ssh key|private key|internal pricing|attacker@|"
+            r"\.env\b|environment variable))",
+            re.IGNORECASE | re.DOTALL,
+        ),
+    ),
 ]
 
 # Hidden unicode: tag block (U+E0000–U+E007F) and zero-width chars
