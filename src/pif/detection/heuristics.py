@@ -208,6 +208,18 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
             re.IGNORECASE | re.DOTALL,
         ),
     ),
+    # Tool call carrying a destructive or exfiltrating shell/SQL payload.
+    (
+        AttackType.AGENTIC_INJECTION,
+        "tool_use_destructive_payload",
+        re.compile(
+            r"(?=.*\b(?:tool|function|interpreter|execute|executing|run|invoke)\b)"
+            r"(?=.*(?:rm\s+-rf|drop\s+table|truncate\s+table|os\.system|subprocess\.|"
+            r"cron\.d|crontab|authorized_keys|--no-preserve-root|"
+            r"curl\s+(?:-\w+\s+)*https?://|wget\s+https?://|\|\s*curl\b|nc\s+-\w*e))",
+            re.IGNORECASE | re.DOTALL,
+        ),
+    ),
 ]
 
 # Hidden unicode: tag block (U+E0000–U+E007F) and zero-width chars
