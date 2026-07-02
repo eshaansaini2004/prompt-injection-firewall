@@ -208,6 +208,20 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
             re.IGNORECASE | re.DOTALL,
         ),
     ),
+    # The signature of indirect injection: an instruction addressed to the model,
+    # sitting inside content the model was asked to read. Same shape whether it arrives
+    # in a retrieved document, an email body, alt text, or EXIF metadata.
+    (
+        AttackType.INDIRECT_INJECTION,
+        "ai_directive_in_content",
+        re.compile(
+            r"\b(?:A\.?I\.?|assistant|LLM|chatbot|model|agent|system)\b[^:\n]{0,30}[:—]\s*"
+            r"(?:ignore|disregard|abandon|stop|forward|exfiltrat|output|reveal|append|"
+            r"send|delete|summari[sz]e|tell|do not|"
+            r"your\s+(?:new\s+)?(?:task|directive|instruction))",
+            re.IGNORECASE,
+        ),
+    ),
     # Tool call carrying a destructive or exfiltrating shell/SQL payload.
     (
         AttackType.AGENTIC_INJECTION,
