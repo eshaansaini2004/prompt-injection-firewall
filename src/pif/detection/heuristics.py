@@ -222,6 +222,21 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
             re.IGNORECASE,
         ),
     ),
+    # Persona jailbreaks that name the missing guardrail rather than a known alias.
+    # Catches the long tail that "you are DAN"-style alias patterns never will.
+    (
+        AttackType.JAILBREAK_PERSONA,
+        "persona_without_safety",
+        re.compile(
+            r"(?:\b(?:no|without|zero|non[e-]?)\s+(?:safety|ethical|content|moral)\s*"
+            r"(?:training|guidelines?|policies|policy|filters?|restrictions?|heuristics?)"
+            r"|\b(?:safety|content|ethical)\s+"
+            r"(?:training|filters?|policies|guidelines?|heuristics?)\s+"
+            r"(?:erased|suspended|removed|disabled|off)"
+            r"|\bunrestricted mode\b|\bchaos mode\b|\bnever declines?\b)",
+            re.IGNORECASE,
+        ),
+    ),
     # Tool call carrying a destructive or exfiltrating shell/SQL payload.
     (
         AttackType.AGENTIC_INJECTION,
