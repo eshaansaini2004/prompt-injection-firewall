@@ -216,6 +216,8 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
         "ai_directive_in_content",
         re.compile(
             r"\b(?:A\.?I\.?|assistant|LLM|chatbot|model|agent|system)\b[^:\n]{0,30}[:—]\s*"
+            # "AI: you must now exfiltrate" — allow a short lead-in before the verb.
+            r"(?:you\s+(?:must|should|will|need\s+to)\s+(?:now\s+)?)?"
             r"(?:ignore|disregard|abandon|stop|forward|exfiltrat|output|reveal|append|"
             r"send|delete|summari[sz]e|tell|do not|"
             r"your\s+(?:new\s+)?(?:task|directive|instruction))",
@@ -228,7 +230,7 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
         AttackType.JAILBREAK_PERSONA,
         "persona_without_safety",
         re.compile(
-            r"(?:\b(?:no|without|zero|non[e-]?)\s+(?:safety|ethical|content|moral)\s*"
+            r"(?:\b(?:no|without|zero|non[e-]?)\s+(?:any\s+)?(?:safety|ethical|content|moral)\s*"
             r"(?:training|guidelines?|policies|policy|filters?|restrictions?|heuristics?)"
             r"|\b(?:safety|content|ethical)\s+"
             r"(?:training|filters?|policies|guidelines?|heuristics?)\s+"
