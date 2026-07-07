@@ -83,8 +83,12 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
         AttackType.ROLEPLAY_FRAMING,
         "roleplay_harmful",
         re.compile(
+            # "explain" and "tell me" used to sit in the second group, which made every
+            # "pretend you're teaching a five-year-old" request an attack. The framing is
+            # only suspicious when paired with a harmful persona or a lifted restriction.
             r"\b(pretend|roleplay|act\s+as|play\s+the\s+role\s+of|you\s+are\s+now)\b.{0,80}"
-            r"\b(deceased|retired|rogue|hacker|chemist|explain|tell\s+me|step.by.step)\b",
+            r"\b(deceased|retired|rogue|hacker|chemist|criminal|step.by.step|"
+            r"no\s+(?:restrictions?|limits?|rules?)|anything\s+i\s+ask)\b",
             re.IGNORECASE | re.DOTALL,
         ),
     ),
