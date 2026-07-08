@@ -23,9 +23,16 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
         AttackType.DIRECT_INJECTION,
         "ignore_previous_instructions",
         re.compile(
-            r"\b(ignore|forget|disregard|override|cancel|reset)\b.{0,60}"
-            r"\b(previous|prior|all|earlier|above|everything|told)\b.{0,60}"
-            r"\b(instructions?|rules?|constraints?|prompt|guidelines?|context|unrestricted|told)?\b",
+            # The trailing object group used to be optional, so "ignore my previous
+            # question" matched. Either the blunt form ("ignore all") fires on its own,
+            # or something instruction-shaped has to be named.
+            r"\b(?:ignore|forget|disregard|override|cancel|reset)\b"
+            r"(?:"
+            r"\s+(?:all|everything)\b"
+            r"|.{0,60}?\b(?:previous|prior|all|earlier|above|everything|told)\b.{0,60}?"
+            r"\b(?:instructions?|rules?|constraints?|prompts?|guidelines?|context|"
+            r"unrestricted|training|told)\b"
+            r")",
             re.IGNORECASE | re.DOTALL,
         ),
     ),
