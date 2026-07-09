@@ -124,8 +124,12 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
         AttackType.OBFUSCATION,
         "base64_blob",
         re.compile(
-            r"\b(decode\s+this|interpret\s+this|translate\s+this\s+cipher|"
-            r"base64|rot.?13)\b",
+            # "Decode this URL-encoded string" is an ordinary request. Naming a
+            # mundane encoding right after "this" takes it out of scope; Morse,
+            # NATO phonetic and the rest still match.
+            r"\b(?:(?:decode|interpret)\s+this"
+            r"(?!\s+(?:url|percent|html|utf|json|yaml|xml|csv))"
+            r"|translate\s+this\s+cipher|base64|rot.?13)\b",
             re.IGNORECASE,
         ),
     ),
