@@ -124,12 +124,17 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
         AttackType.OBFUSCATION,
         "base64_blob",
         re.compile(
-            # "Decode this URL-encoded string" is an ordinary request. Naming a
-            # mundane encoding right after "this" takes it out of scope; Morse,
-            # NATO phonetic and the rest still match.
+            # Two ways this used to over-fire: "decode this URL-encoded string" is an
+            # ordinary request, and merely *naming* base64 is how people discuss it.
+            # So: mundane encodings after "this" are exempt, and the encoding names
+            # need an imperative or a payload next to them rather than a bare mention.
             r"\b(?:(?:decode|interpret)\s+this"
             r"(?!\s+(?:url|percent|html|utf|json|yaml|xml|csv))"
-            r"|translate\s+this\s+cipher|base64|rot.?13)\b",
+            r"|translate\s+this\s+cipher"
+            r"|(?:base64|rot.?13)\b[^.?!\n]{0,40}?"
+            r"\b(?:and\s+(?:follow|obey|execute|run)|then\s+(?:follow|obey|execute)|"
+            r"instructions?|payload|string:|:\s*[A-Za-z0-9+/]{16,})"
+            r"|\b(?:decode|decrypt)\b[^.?!\n]{0,30}\b(?:base64|rot.?13)\b)",
             re.IGNORECASE,
         ),
     ),
