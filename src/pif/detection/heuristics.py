@@ -515,4 +515,11 @@ def extract_text_from_messages(messages: list[dict[str, Any]]) -> str:
             text = ""
         if text.strip():
             parts.append(f"[TURN {turn}] {text}")
+
+    # A single turn gets no marker. Every crescendo example in the corpus opens with
+    # the literal "[TURN 1] ", so tagging a one-shot request pulls its embedding
+    # toward that cluster and flags ordinary prompts as escalation.
+    if len(parts) == 1:
+        return parts[0].split("] ", 1)[1]
+
     return "\n\n".join(parts)

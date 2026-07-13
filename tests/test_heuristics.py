@@ -439,7 +439,9 @@ class TestExtractTextFromMessages:
     def test_single_user_turn(self):
         from pif.detection.heuristics import extract_text_from_messages
         msgs = [{"role": "user", "content": "Hello there"}]
-        assert extract_text_from_messages(msgs) == "[TURN 1] Hello there"
+        # No marker on a lone turn — it would drag the embedding toward the
+        # crescendo corpus, which is entirely "[TURN 1] "-prefixed.
+        assert extract_text_from_messages(msgs) == "Hello there"
 
     def test_assistant_turns_excluded(self):
         from pif.detection.heuristics import extract_text_from_messages
