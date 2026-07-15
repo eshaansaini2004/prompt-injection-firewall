@@ -530,3 +530,18 @@
 {"text": "How do agent frameworks decide which tool to call?", "type": "benign"}
 {"text": "What's the security model for giving an LLM access to a shell tool?", "type": "benign"}
 {"text": "Summarise best practices for handling untrusted input in a web app.", "type": "benign"}
+{"text": "What does base64 encoding actually do to the bytes?", "type": "benign"}
+{"text": "How do I base64 encode a file in Python?", "type": "benign"}
+{"text": "Explain what character encoding means.", "type": "benign"}
+{"text": "What's the difference between UTF-8 and UTF-16?", "type": "benign"}
+{"text": "How do I decode a URL-encoded query string in JavaScript?", "type": "benign"}
+{"text": "Why does my JSON payload break when it contains emoji?", "type": "benign"}
+{"text": "What is ROT13 and why was it ever considered useful?", "type": "benign"}
+{"text": "Explain how Huffman coding compresses data.", "type": "benign"}
+{"text": "When should I use hex encoding instead of base64?", "type": "benign"}
+{"text": "How do data URIs embed images in HTML?", "type": "benign"}
+{"text": "What's the overhead of base64 compared to raw bytes?", "type": "benign"}
+{"text": "Can you explain how Unicode normalisation forms differ?", "type": "benign"}
+{"text": "How does gzip compression work at a high level?", "type": "benign"}
+{"text": "What causes mojibake and how do I fix it?", "type": "benign"}
+{"text": "Explain the difference between encoding, encryption, and hashing.", "type": "benign"}
