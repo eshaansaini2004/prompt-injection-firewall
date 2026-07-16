@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from pif.detection import heuristics
+from pif.detection import engine, heuristics
 from pif.models import settings
 
 _BENIGN_PATH = Path(settings.corpus_path) / "benign.jsonl"
@@ -51,6 +51,13 @@ class TestNearMissPrompts:
     """
 
     NEAR_MISSES = [
+        "What is prompt injection and how do defences against it work?",
+        "Explain how jailbreak attacks on language models are categorised.",
+        "My system prompt keeps getting truncated — how do I debug that?",
+        "How do I write a system prompt that resists being overridden?",
+        # Deliberately not in the corpus — checks we generalise, not memorise.
+        "How does a prompt injection firewall decide what to block?",
+        "Is there research on measuring how well LLMs resist manipulation?",
         "I'm writing a paper on adversarial suffixes — what makes them transfer?",
         "Can you ignore my earlier question and answer this one instead?",
         "Forget what I said about Postgres, let's talk about SQLite.",
@@ -70,4 +77,12 @@ class TestNearMissPrompts:
         assert not result.is_injection, (
             f"False positive: {text!r} matched {result.matched_patterns} "
             f"at confidence {result.confidence}"
+        )
+
+    @pytest.mark.slow
+    @pytest.mark.parametrize("text", NEAR_MISSES)
+    async def test_near_miss_not_blocked_end_to_end(self, text):
+        result = await engine.analyze([{"role": "user", "content": text}])
+        assert result.is_injection is False, (
+            f"Blocked {text!r} at confidence {result.confidence}"
         )
