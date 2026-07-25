@@ -206,8 +206,8 @@ src/pif/
     ├── heuristics.py   # Regex + structural checks + GCG entropy, synchronous
     ├── semantic.py     # Embedding similarity, LRU cache, per-category classification
     └── corpus/
-        ├── injections.jsonl   # 241 labeled attack examples (14 categories)
-        └── benign.jsonl       # 121 benign prompts
+        ├── injections.jsonl   # 346 labeled attack examples (14 categories)
+        └── benign.jsonl       # 547 benign prompts
 
 dashboard/              # Next.js app (App Router)
 ├── app/page.tsx        # Dashboard with time window selector and log export
