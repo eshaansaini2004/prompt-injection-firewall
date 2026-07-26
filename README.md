@@ -124,7 +124,9 @@ GCG (Greedy Coordinate Gradient) attacks from Zou et al. 2023 append optimized t
 1. **Entropy check** — a 30-character sliding window with Shannon entropy > 4.5 bits/char and > 55% non-alphanumeric characters triggers `ADVERSARIAL_SUFFIX` at confidence 0.85.
 2. **Repeated token clusters** — five or more consecutive unusual punctuation tokens (`! ! ! ! !`, `} } } { }`) trigger the same category.
 
-**What these catch:** high-entropy gibberish suffixes, repeated token sequences, and GCG outputs that produce statistical anomalies. Measured recall on the test corpus is **1.00 (2/2 adversarial\_suffix examples in the held-out split)**.
+**What these catch:** high-entropy gibberish suffixes, repeated token sequences, and GCG outputs that produce statistical anomalies. Measured recall on the test corpus is **1.00 (5/5 adversarial\_suffix examples in the held-out split)** — a small enough sample that it should be read as "no known misses", not as a rate.
+
+One corpus caveat worth stating: every GCG example here is an ordinary question with a suffix bolted on. An entry whose carrier text dominated the payload (`"What is the capital of France? ! ! ! ..."`) taught the semantic layer to score the bare question at 0.88 similarity, which flagged the harmless question on its own. Corpus entries that are mostly benign text poison the index they're meant to sharpen.
 
 **What they miss:** GCG suffixes specifically optimized to stay below the entropy threshold or avoid token repetition. An adversary who white-box attacks the entropy check can craft a suffix that reads as moderate-entropy text while still transferring adversarially. The semantic layer provides no additional defense here — GCG suffixes lack the natural-language semantics that cosine similarity relies on.
 
