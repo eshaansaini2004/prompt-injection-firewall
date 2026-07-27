@@ -133,12 +133,15 @@ def logs(limit: int = typer.Option(20, help="Number of recent events to show")) 
 def test(
     prompt: str | None = typer.Argument(None, help="Prompt to test. Reads from stdin if omitted."),
     threshold: float | None = typer.Option(None, help="Override block threshold for this call."),
+    explain: bool = typer.Option(
+        False, "--explain", help="Show each layer's verdict, not just the combined one."
+    ),
     json_output: bool = typer.Option(False, "--json", help="Output raw JSON."),
 ) -> None:
     """Run the detection engine against a prompt."""
     import sys
 
-    from pif.detection import engine
+    from pif.detection import engine, heuristics
 
     if prompt is None:
         if sys.stdin.isatty():
@@ -174,6 +177,31 @@ def test(
     typer.echo(f"Layer triggered:  {result.layer_triggered}")
     typer.echo(f"Matched patterns: {patterns}")
     typer.echo(f"Latency:          {result.latency_ms}ms")
+
+    if not explain:
+        return
+
+    # Re-run each layer on its own. The combined result hides which layer actually
+    # decided, and when tuning the corpus that's the only thing you want to know.
+    from pif.detection import semantic
+
+    analyzed = heuristics.extract_text_from_messages(messages)
+    h = heuristics.check(analyzed)
+
+    typer.echo("\nPer-layer breakdown:")
+    typer.echo(
+        f"  L1 heuristics: {h.confidence:.4f} "
+        f"({', '.join(h.matched_patterns) if h.matched_patterns else 'no patterns'})"
+    )
+
+    if h.confidence >= engine._HEURISTIC_FAST_PATH:
+        typer.echo("  L2 semantic:   skipped — heuristics hit the fast path")
+    else:
+        s = semantic.check(heuristics.decode_base64_blobs(analyzed))
+        typer.echo(f"  L2 semantic:   {s.confidence:.4f} (nearest {s.attack_type.value})")
+
+    if analyzed != prompt:
+        typer.echo(f"\n[dim]Text actually scored:[/dim] {analyzed[:200]!r}")
 
 
 @app.command()
