@@ -1,72 +1,74 @@
 # PIF — Todo
 
-Audited 2026-05-17. Most of the original list shipped between March and May; what's
-left below is what a `grep` of the source actually confirms is missing.
+Audited 2026-05-17, updated 2026-07-29 after a pass over lint, types, detection
+quality, and test coverage. Everything below is checked against the source, not
+against what an earlier version of this file assumed.
 
 ## Detection
 
-- [x] **Entropy scoring + GCG adversarial suffix patterns** — `_check_gcg_entropy` in
-  `heuristics.py`, plus corpus examples from Zou et al. 2023.
-- [x] **Agentic / tool-use injection patterns** — four pattern groups in `heuristics.py`.
-- [x] **Multi-turn crescendo detection** — `extract_text_from_messages` passes turn
-  markers through, engine sees the whole conversation.
+- [x] **Entropy scoring + GCG adversarial suffix patterns** — `_check_gcg_entropy`.
+- [x] **Agentic / tool-use injection patterns** — JSON-shaped, plus natural-language
+  tool abuse and destructive-payload variants.
+- [x] **Multi-turn crescendo detection** — turn markers, and single turns no longer
+  get one (it dragged them into the crescendo cluster).
+- [x] **Attack type classification in semantic layer** — per-category embeddings.
+- [x] **Classify by k-nearest vote** — mean of top 3 rather than single best match.
+- [x] **Indirect injection: directives addressed to the model inside content.**
+- [x] **Persona jailbreaks that name the removed guardrail** rather than an alias.
 
-- [x] **Attack type classification in semantic layer** — `_classify_attack_type` builds
-  per-category embedding matrices and returns the best-matching type. Correcting the
-  earlier audit entry: this shipped, it was never open.
+- [ ] **Crescendo detection has no escalation gradient**
+  The engine sees the concatenated conversation and relies on the last turn looking
+  bad. It never measures whether severity *rose* across turns, which is the actual
+  definition of the attack. A gradient over per-turn heuristic scores would.
 
-- [ ] **Classify by k-nearest vote, not single best match**
-  `_classify_attack_type` picks the category with the highest *single* similarity, so one
-  stray corpus line decides the label. Vote across the k nearest instead.
+- [ ] **`heuristics.check` is a 200-line linear scan**
+  Fine at this size, and cheap next to the semantic layer. Worth revisiting only if
+  the pattern list doubles again.
 
 ## Semantic Layer
 
-- [x] **Expand corpus: 50→300 injections, 30→150 benign** — now 356 / 507.
-- [x] **Embedding cache** — `functools.lru_cache(maxsize=512)` on `_encode_cached`.
+- [x] **Expand corpus** — 346 injections / 547 benign.
+- [x] **Embedding cache** — `lru_cache(maxsize=512)` on `_encode_cached`.
+- [x] **`pif reindex` now states its index is in-memory**; CLAUDE.md gotcha corrected.
 
-- [ ] **`pif reindex` doesn't do what its name and the docs claim**
-  There is no on-disk index. `_load_corpus` embeds the corpus lazily into module globals
-  on first use, so every process rebuilds it at startup regardless. `pif reindex` warms
-  a cache that dies with the CLI process, and the "corpus changes require reindex"
-  gotcha in CLAUDE.md is wrong. Either persist an index or make the command honest.
+- [ ] **The corpus has no held-out guard against carrier-text entries**
+  A GCG example that was mostly benign carrier text taught the index to flag the
+  bare carrier question. Fixed by hand, but nothing stops the next one. A lint over
+  the corpus (flag any injection entry whose benign-similarity exceeds its
+  injection-similarity) would catch this class at authoring time.
+
+- [ ] **Semantic latency is ~1.4s p50 in eval**
+  That's model load amortised across a cold-start batch, not steady state, but it
+  has never been measured properly under concurrency.
 
 ## Testing
 
-- [x] **test_engine.py — orchestration coverage** — 23 tests.
-- [x] **Streaming response tests** — three in `test_proxy.py` covering SSE passthrough,
-  pre-upstream block, and upstream error.
+- [x] **test_engine.py orchestration coverage** — 23 tests.
+- [x] **Streaming response tests.**
+- [x] **End-to-end integration tests (no mocks)** — `tests/test_e2e.py`.
+- [x] **False-positive guard suite** — `tests/test_false_positives.py`, gates the whole
+  benign corpus plus near-miss and carrier-question prompts.
+- [x] **Per-category heuristic coverage** — agentic, indirect, persona classes added.
+- [x] **CLI tests** — `tests/test_cli.py`.
 
-- [ ] **End-to-end integration tests (no mocks)**
-  Everything currently stubs the detection result. Nothing runs both layers together
-  and asserts on the real block/pass decision.
-
-- [ ] **Per-category heuristic coverage**
-  `test_heuristics.py` is heavy on direct injection and obfuscation, thin on the other
-  ten categories. Recall regressions there would go unnoticed.
-
-- [ ] **False-positive guard suite**
-  The benign corpus is large but untested as a suite. Near-miss prompts (security
-  questions, prompt-engineering discussion) are the ones that will break precision.
+- [ ] **No test asserts on `db.py` directly**
+  Storage is exercised only through the proxy. Retention, the payload-hash path, and
+  `STORE_PAYLOADS=false` behaviour are all untested.
 
 ## Infrastructure
 
-- [x] **Docker setup** — `Dockerfile` + `docker-compose.yml`.
-- [x] **Rate limiting** — `slowapi`, per-IP, `settings.rate_limit`.
-
-- [ ] **CI gate on lint, types, and tests**
-  `.github/workflows/eval.yml` runs the eval and nothing else. `ruff` and `mypy` both
-  fail on `master` right now and CI is happy about it.
+- [x] **Docker setup.**
+- [x] **Rate limiting** — `slowapi`, per-IP.
+- [x] **CI gate on lint, types, and tests** — `.github/workflows/ci.yml`.
 
 ## CLI
 
-- [x] **`pif test` command** — takes a prompt, prints confidence and attack type.
-
-- [ ] **`pif test` should show which patterns matched per layer**
-  Right now it prints the verdict without the evidence, which makes corpus debugging
-  guesswork.
+- [x] **`pif test` command**, now with `--explain` for per-layer evidence.
 
 ## Dashboard
 
-- [x] **Event detail / payload inspection** — `EventDetailPanel.tsx`.
-- [x] **Configurable time window on chart** — 1h / 6h / 24h / 7d.
-- [x] **Log export** — CSV/JSON download.
+- [x] **Event detail, time window, log export** — all present.
+
+- [ ] **Dashboard has no tests at all.**
+  Not a single one. It reads live from the backend, so a schema change on the Python
+  side breaks it silently.
