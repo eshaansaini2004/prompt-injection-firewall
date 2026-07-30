@@ -4,6 +4,7 @@ CLI entrypoint. `pif start`, `pif reindex`, `pif logs`.
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
 
 import typer
 import uvicorn
@@ -25,8 +26,59 @@ def serve(
     uvicorn.run("pif.proxy:app", host=host, port=port, reload=reload)
 
 
+def _find_carrier_text_entries(
+    corpus_path: Path, margin: float = 0.05
+) -> list[tuple[str, float, float]]:
+    """
+    Find injection entries whose nearest benign neighbour beats their nearest
+    *other* attack entry by `margin`.
+
+    These are the corpus records that backfire: an attack example made mostly of
+    ordinary text (a GCG suffix bolted onto "What is the capital of France?") sits
+    right next to that harmless question in embedding space, so indexing it teaches
+    the semantic layer to flag the question.
+    """
+    import json
+
+    import numpy as np
+    from sklearn.metrics.pairwise import cosine_similarity
+
+    from pif.detection import semantic
+
+    def _load(name: str) -> list[str]:
+        with open(corpus_path / name) as f:
+            return [json.loads(line)["text"] for line in f if line.strip()]
+
+    injections = _load("injections.jsonl")
+    benign = _load("benign.jsonl")
+
+    model = semantic._get_model()
+    inj_embs = model.encode(injections, normalize_embeddings=True)
+    ben_embs = model.encode(benign, normalize_embeddings=True)
+
+    inj_to_inj = cosine_similarity(inj_embs, inj_embs)
+    np.fill_diagonal(inj_to_inj, -1.0)  # don't let an entry match itself
+    inj_to_ben = cosine_similarity(inj_embs, ben_embs)
+
+    suspects = []
+    for i, text in enumerate(injections):
+        best_attack = float(inj_to_inj[i].max())
+        best_benign = float(inj_to_ben[i].max())
+        if best_benign - best_attack > margin:
+            suspects.append((text, best_attack, best_benign))
+
+    return sorted(suspects, key=lambda s: s[2] - s[1], reverse=True)
+
+
 @app.command()
-def check_corpus() -> None:
+def check_corpus(
+    semantic_lint: bool = typer.Option(
+        False,
+        "--semantic-lint",
+        help="Also flag injection entries that sit closer to the benign corpus "
+        "than to the rest of the attack corpus (slow — loads the model).",
+    ),
+) -> None:
     """Validate and count corpus examples."""
     import json
     from pathlib import Path
@@ -54,6 +106,23 @@ def check_corpus() -> None:
                     errors += 1
         status = "[green]ok[/green]" if not errors else "[red]errors[/red]"
         console.print(f"{fname}: {count} examples — {status}")
+
+    if not semantic_lint:
+        return
+
+    console.print("\n[yellow]Semantic lint (loading model)...[/yellow]")
+    suspects = _find_carrier_text_entries(path)
+
+    if not suspects:
+        console.print("[green]No carrier-text entries found.[/green]")
+        return
+
+    console.print(
+        f"[red]{len(suspects)} injection entries look more benign than malicious.[/red]\n"
+        "[dim]These teach the index to flag whatever benign text they wrap.[/dim]"
+    )
+    for text, inj_sim, ben_sim in suspects:
+        console.print(f"  benign={ben_sim:.3f} > attack={inj_sim:.3f} :: {text[:80]}")
 
 
 @app.command()
