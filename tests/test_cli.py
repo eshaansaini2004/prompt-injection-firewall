@@ -73,6 +73,44 @@ class TestTestCommand:
         assert "L1 heuristics" in out.stdout
         assert "L2 semantic" in out.stdout
 
+    def test_carrier_text_lint_flags_benign_leaning_entry(self, tmp_path):
+        """
+        An attack entry that's mostly benign carrier text should be flagged; a
+        normal one shouldn't. Uses stub embeddings — no model, no corpus.
+        """
+        import json
+
+        import numpy as np
+
+        from pif.cli import _find_carrier_text_entries
+
+        (tmp_path / "injections.jsonl").write_text(
+            json.dumps({"text": "carrier question with suffix", "type": "x"})
+            + "\n"
+            + json.dumps({"text": "a real attack", "type": "x"})
+            + "\n"
+        )
+        (tmp_path / "benign.jsonl").write_text(
+            json.dumps({"text": "carrier question", "type": "benign"}) + "\n"
+        )
+
+        vectors = {
+            "carrier question with suffix": [1.0, 0.0],
+            "a real attack": [0.0, 1.0],
+            "carrier question": [0.99, 0.01],
+        }
+
+        class _StubModel:
+            def encode(self, texts, **kwargs):
+                arr = np.array([vectors[t] for t in texts], dtype=np.float64)
+                return arr / np.linalg.norm(arr, axis=1, keepdims=True)
+
+        with patch("pif.detection.semantic._get_model", return_value=_StubModel()):
+            suspects = _find_carrier_text_entries(tmp_path)
+
+        flagged = [text for text, _, _ in suspects]
+        assert flagged == ["carrier question with suffix"]
+
     def test_explain_notes_fast_path_skip(self):
         with patch("pif.detection.engine.analyze", return_value=_result()):
             out = runner.invoke(
