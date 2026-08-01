@@ -204,11 +204,19 @@ def _classify_attack_type(query_emb: np.ndarray) -> AttackType:
     return best_type
 
 
-def check(text: str, corpus_path: str | None = None) -> DetectionResult:
+def check(
+    text: str, corpus_path: str | None = None, threshold: float | None = None
+) -> DetectionResult:
     """
     Compute cosine similarity against injection/benign corpora.
     Returns a DetectionResult with layer_triggered=2.
+
+    `threshold` overrides settings.block_threshold for this call. It decides both
+    `is_injection` and whether an attack type is resolved — without it, a caller
+    passing X-Firewall-Threshold below the global default gets a blocked request
+    labelled BENIGN, because this layer had already called it benign.
     """
+    block_threshold = threshold if threshold is not None else settings.block_threshold
     corpus = corpus_path or settings.corpus_path
     inj_embs, benign_embs = _load_corpus(corpus)
 
@@ -233,7 +241,7 @@ def check(text: str, corpus_path: str | None = None) -> DetectionResult:
     else:
         confidence = max_inj_sim
 
-    is_injection = confidence >= settings.block_threshold
+    is_injection = confidence >= block_threshold
 
     if is_injection:
         attack_type = _classify_attack_type(query_emb)

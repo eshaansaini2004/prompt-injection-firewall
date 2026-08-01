@@ -50,7 +50,9 @@ async def analyze(
     # benign encoded content into the obfuscation cluster.
     loop = asyncio.get_running_loop()
     semantic_text = heuristics.decode_base64_blobs(text)
-    s_result = await loop.run_in_executor(None, semantic.check, semantic_text, corpus_path)
+    s_result = await loop.run_in_executor(
+        None, semantic.check, semantic_text, corpus_path, block_threshold
+    )
 
     # Merge results — take max confidence, prefer heuristic attack_type when it matched
     combined_confidence = max(h_result.confidence, s_result.confidence)
