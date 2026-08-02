@@ -166,6 +166,36 @@ class TestThresholdOverride:
 
         assert result.is_injection is False
 
+    async def test_threshold_override_reaches_the_semantic_layer(self) -> None:
+        """
+        Regression: semantic.check used to read settings.block_threshold directly, so
+        a per-request override decided is_injection at the engine but never reached
+        the layer that resolves attack_type. Blocked requests came back BENIGN.
+        """
+        h_result = _make_result(0.10, AttackType.BENIGN)
+        s_result = _make_result(0.30, AttackType.BENIGN)
+        with (
+            patch("pif.detection.engine.heuristics.check", return_value=h_result),
+            patch("pif.detection.engine.semantic.check", return_value=s_result) as mock_s,
+        ):
+            await engine.analyze(_user_msg("borderline text"), threshold=0.15)
+
+        # positional: (text, corpus_path, threshold)
+        assert mock_s.call_args[0][2] == 0.15
+
+    async def test_semantic_receives_default_threshold_when_not_overridden(self) -> None:
+        from pif.models import settings
+
+        h_result = _make_result(0.10, AttackType.BENIGN)
+        s_result = _make_result(0.30, AttackType.BENIGN)
+        with (
+            patch("pif.detection.engine.heuristics.check", return_value=h_result),
+            patch("pif.detection.engine.semantic.check", return_value=s_result) as mock_s,
+        ):
+            await engine.analyze(_user_msg("borderline text"))
+
+        assert mock_s.call_args[0][2] == settings.block_threshold
+
     async def test_threshold_override_applies_to_semantic_path(self) -> None:
         h_result = _make_result(0.20, AttackType.BENIGN)
         s_result = _make_result(0.60, AttackType.DIRECT_INJECTION, is_injection=False)
