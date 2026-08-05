@@ -16,10 +16,21 @@ against what an earlier version of this file assumed.
 - [x] **Indirect injection: directives addressed to the model inside content.**
 - [x] **Persona jailbreaks that name the removed guardrail** rather than an alias.
 
-- [ ] **Crescendo detection has no escalation gradient**
-  The engine sees the concatenated conversation and relies on the last turn looking
-  bad. It never measures whether severity *rose* across turns, which is the actual
-  definition of the attack. A gradient over per-turn heuristic scores would.
+- [x] **Crescendo escalation gradient — measured, and dropped.**
+  The idea was to score each turn and flag a rising trend. The data doesn't support
+  it. Per-turn semantic confidence across the 12 crescendo sequences:
+
+  ```
+  attack deltas (last - first): +0.270 +0.085 +0.028 -0.244 -0.053 -0.098 +0.079 -0.194
+  benign deltas:                -0.006 -0.106 +0.016
+  ```
+
+  Attack gradients straddle zero and overlap the benign ones completely — half the
+  real crescendos *descend*, because the opening turn is often the most alarming
+  phrasing in the conversation. What does separate them is absolute level: attack
+  turns sit at 0.35–0.83, benign at 0.11–0.24. That's the signal the engine already
+  uses (max confidence over the conversation). Adding a gradient feature would add
+  a knob that fires on noise. Revisit only with per-turn labelled data.
 
 - [ ] **`heuristics.check` is a 200-line linear scan**
   Fine at this size, and cheap next to the semantic layer. Worth revisiting only if
