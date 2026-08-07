@@ -20,12 +20,14 @@ jobs:
       - name: Install
         run: pip install -e ".[dev]"
 
-      - name: Run eval (informational — no fail gate until corpus stabilizes)
+      # Now a real gate. The corpus is stable enough (346 injection / 547 benign,
+      # F1 0.92) that an F1 drop past the tolerance in eval.py is a regression, not
+      # noise. Re-save the baseline in the same commit if a drop is intended.
+      - name: Run eval (fails on F1 regression vs baseline)
         id: eval
         run: |
-          python -m pif.eval --compare-baseline --json > eval_result.json || echo "::warning::Eval returned non-zero (possible F1 regression — check eval output)"
+          python -m pif.eval --compare-baseline --json > eval_result.json
           cat eval_result.json
-        continue-on-error: true
 
       - name: Run threshold sweep
         run: python -m pif.eval --sweep --json > eval_sweep.json
