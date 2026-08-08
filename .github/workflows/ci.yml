@@ -48,3 +48,27 @@ jobs:
 
       - name: Pytest
         run: pytest -q
+
+  # The dev venv drifts from what pyproject declares — a missing greenlet only
+  # surfaced when someone installed clean. This job installs the runtime deps
+  # alone and imports every module.
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install runtime dependencies only
+        run: pip install -e .
+
+      - name: Import every module
+        run: |
+          python -c "
+          import pif.proxy, pif.db, pif.cli, pif.eval
+          from pif.detection import engine, heuristics, semantic
+          print('all modules import cleanly')
+          "
