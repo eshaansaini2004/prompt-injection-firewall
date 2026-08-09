@@ -17,6 +17,8 @@ const ATTACK_COLORS: Record<string, string> = {
   benign: "#22c55e",
 };
 
+// The backend sends JSON null for an absent model, not an absent key — so this has
+// to admit null, or the typed API client won't assign into it.
 export type EventDetail = {
   id: string;
   timestamp: string;
@@ -26,7 +28,7 @@ export type EventDetail = {
   layer_triggered: number;
   matched_patterns?: string[];
   latency_ms?: number;
-  model?: string;
+  model?: string | null;
 };
 
 export default function EventDetailPanel({

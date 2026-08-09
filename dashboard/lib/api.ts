@@ -5,16 +5,44 @@ function authHeaders(): Record<string, string> {
   return API_KEY ? { Authorization: `Bearer ${API_KEY}` } : {};
 }
 
-async function apiFetch(url: string): Promise<unknown> {
+// Response shapes, mirroring the Pydantic models in src/pif/models.py. These are
+// asserted, not validated — if the backend changes a field, TypeScript won't notice.
+// Keep them in step with models.py.
+export type Stats = {
+  total_requests: number;
+  blocked_total: number;
+  blocked_today: number;
+  block_rate: number;
+  avg_latency_ms: number;
+};
+
+export type TimelineBucket = { hour: string; total: number; blocked: number };
+
+export type AttackTypeCount = { attack_type: string; count: number };
+
+export type AttackEvent = {
+  id: string;
+  timestamp: string;
+  model: string | null;
+  attack_type: string;
+  confidence: number;
+  blocked: boolean;
+  payload_hash: string;
+  payload_preview: string | null;
+  layer_triggered: number;
+  latency_ms: number;
+};
+
+async function apiFetch<T>(url: string): Promise<T> {
   const res = await fetch(url, { cache: "no-store", headers: authHeaders() });
   if (!res.ok) {
     throw new Error(`API error ${res.status}: ${res.statusText}`);
   }
-  return res.json();
+  return res.json() as Promise<T>;
 }
 
 export async function fetchStats() {
-  return apiFetch(`${BASE}/api/stats`);
+  return apiFetch<Stats>(`${BASE}/api/stats`);
 }
 
 export async function fetchEvents(params?: {
@@ -28,19 +56,19 @@ export async function fetchEvents(params?: {
   if (params?.offset) q.set("offset", String(params.offset));
   if (params?.blocked_only) q.set("blocked_only", "true");
   if (params?.attack_type) q.set("attack_type", params.attack_type);
-  return apiFetch(`${BASE}/api/events?${q}`);
+  return apiFetch<AttackEvent[]>(`${BASE}/api/events?${q}`);
 }
 
 export async function fetchTimeline(hours = 24) {
-  return apiFetch(`${BASE}/api/timeline?hours=${hours}`);
+  return apiFetch<TimelineBucket[]>(`${BASE}/api/timeline?hours=${hours}`);
 }
 
 export async function fetchEvent(event_id: string) {
-  return apiFetch(`${BASE}/api/events/${event_id}`);
+  return apiFetch<AttackEvent>(`${BASE}/api/events/${event_id}`);
 }
 
 export async function fetchAttackTypes() {
-  return apiFetch(`${BASE}/api/attack-types`);
+  return apiFetch<AttackTypeCount[]>(`${BASE}/api/attack-types`);
 }
 
 export function createEventSocket(onEvent: (event: unknown) => void): { close: () => void } {
