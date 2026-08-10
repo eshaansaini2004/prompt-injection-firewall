@@ -13,6 +13,9 @@ import {
   fetchEvents,
   fetchEvent,
   createEventSocket,
+  type Stats,
+  type TimelineBucket,
+  type AttackTypeCount,
 } from "@/lib/api";
 import EventDetailPanel, { type EventDetail } from "@/app/components/EventDetailPanel";
 
@@ -77,13 +80,12 @@ function AttackBadge({ type }: { type: string }) {
   );
 }
 
-type StatsData = { total_requests: number; blocked_total: number; block_rate: number; avg_latency_ms: number };
-type TimelineBucket = { hour: string; total: number; blocked: number };
-type AttackTypeCount = { attack_type: string; count: number };
+// Stats, TimelineBucket and AttackTypeCount now come from lib/api — they were
+// redeclared here, so a backend field change had to be fixed in two places.
 type LiveEvent = { id: string; timestamp: string; attack_type: string; confidence: number; blocked: boolean; layer_triggered: number };
 
 export default function Dashboard() {
-  const [stats, setStats] = useState<StatsData | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
   const [timeline, setTimeline] = useState<TimelineBucket[]>([]);
   const [attackTypes, setAttackTypes] = useState<AttackTypeCount[]>([]);
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
