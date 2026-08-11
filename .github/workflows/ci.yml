@@ -49,6 +49,34 @@ jobs:
       - name: Pytest
         run: pytest -q
 
+  # The dashboard had five type errors sitting on master — `npm run lint` alone
+  # never looked at them, and nothing ran tsc.
+  dashboard:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
   # The dev venv drifts from what pyproject declares — a missing greenlet only
   # surfaced when someone installed clean. This job installs the runtime deps
   # alone and imports every module.
