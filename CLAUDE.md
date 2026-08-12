@@ -90,7 +90,13 @@ npm install
 npm run dev        # :3001
 npm run build
 npm run lint
+npx tsc --noEmit   # `npm run lint` does NOT typecheck — run this too
 ```
+
+**Response types live in `lib/api.ts`** and mirror the Pydantic models in
+`src/pif/models.py`. They're assertions, not validation: nothing checks them at
+runtime, so a backend field change breaks the dashboard silently. Change both sides
+together.
 
 ---
 
