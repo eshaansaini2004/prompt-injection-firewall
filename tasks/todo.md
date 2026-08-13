@@ -42,11 +42,13 @@ against what an earlier version of this file assumed.
 - [x] **Embedding cache** — `lru_cache(maxsize=512)` on `_encode_cached`.
 - [x] **`pif reindex` now states its index is in-memory**; CLAUDE.md gotcha corrected.
 
-- [ ] **The corpus has no held-out guard against carrier-text entries**
-  A GCG example that was mostly benign carrier text taught the index to flag the
-  bare carrier question. Fixed by hand, but nothing stops the next one. A lint over
-  the corpus (flag any injection entry whose benign-similarity exceeds its
-  injection-similarity) would catch this class at authoring time.
+- [x] **Carrier-text corpus lint** — `pif check-corpus --semantic-lint`. Flags any
+  injection entry whose nearest benign neighbour beats its nearest attack neighbour.
+  Currently reports 10 entries, including the one found by hand.
+
+- [ ] **Act on the 9 remaining carrier-text entries the lint reports**
+  Only the worst offender was rewritten. The rest are real but lower-impact; each
+  needs a judgement call on whether to rewrite or drop.
 
 - [ ] **Semantic latency is ~1.4s p50 in eval**
   That's model load amortised across a cold-start batch, not steady state, but it
@@ -62,9 +64,8 @@ against what an earlier version of this file assumed.
 - [x] **Per-category heuristic coverage** — agentic, indirect, persona classes added.
 - [x] **CLI tests** — `tests/test_cli.py`.
 
-- [ ] **No test asserts on `db.py` directly**
-  Storage is exercised only through the proxy. Retention, the payload-hash path, and
-  `STORE_PAYLOADS=false` behaviour are all untested.
+- [x] **`db.py` tests** — `tests/test_db.py`, in-memory SQLite per test. Covers the
+  `STORE_PAYLOADS=false` privacy path, filters, pagination, aggregates.
 
 ## Infrastructure
 
@@ -80,6 +81,19 @@ against what an earlier version of this file assumed.
 
 - [x] **Event detail, time window, log export** — all present.
 
-- [ ] **Dashboard has no tests at all.**
-  Not a single one. It reads live from the backend, so a schema change on the Python
-  side breaks it silently.
+- [x] **Dashboard typechecks and builds in CI** — it had five `tsc` errors sitting on
+  master; `npm run lint` never looked at them.
+
+- [ ] **Dashboard still has no unit tests.**
+  CI now catches type and build breakage, which is most of the value for a read-only
+  UI this size. Actual component tests need a runner (vitest) that isn't installed.
+
+---
+
+## Current state (2026-08-13)
+
+- 216 tests passing, `ruff` and `mypy` clean across `src/` and `tests/`.
+- Eval: **F1 0.924, precision 0.968, recall 0.884** at threshold 0.40
+  (69 injection / 109 benign held out). Baseline gated in CI.
+- Heuristic false positives on the 547-prompt benign corpus: **0**.
+- Corpus: 346 injection / 547 benign.
