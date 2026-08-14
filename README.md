@@ -212,12 +212,22 @@ DASHBOARD_API_KEY=     # optional; if set, all dashboard endpoints require Beare
 ## Testing
 
 ```bash
-pytest                          # all 91 tests
+pytest                          # all 216 tests
+pytest -m "not slow"            # skip anything needing the model download
 pytest tests/test_heuristics.py -v
 pytest -k "injection" --tb=short
+
+ruff check src/ tests/
+mypy src/
 ```
 
-The semantic layer is mocked in engine tests — no model download needed for the core suite. The `tests/test_semantic.py` tests require the model and are marked `slow`.
+The semantic layer is mocked in engine tests, so the core suite needs no model
+download. Tests that load `all-MiniLM-L6-v2` are marked `slow`.
+
+`tests/test_false_positives.py` is the one to watch. It runs the entire benign
+corpus through the heuristics and fails if a single prompt is flagged, then checks
+near-miss phrasings that were deliberately kept out of the corpus. A detector that
+blocks real traffic is worse than no detector, and that file is what enforces it.
 
 ---
 
