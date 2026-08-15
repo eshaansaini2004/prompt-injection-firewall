@@ -6,6 +6,25 @@ Detection runs in two layers. A fast heuristic pass (regex + structural signals)
 
 A real-time dashboard shows blocked requests, attack type breakdown, time window filtering, and a live event feed over WebSocket.
 
+### Where it stands
+
+| | |
+|---|---|
+| F1 / precision / recall | **0.924** / 0.968 / 0.884 |
+| ROC-AUC | 0.982 |
+| Corpus | 346 attack / 547 benign examples, 14 categories |
+| Held-out test set | 69 attack / 109 benign |
+| Heuristic false positives on the benign corpus | 0 |
+| Layer 1 latency | ~0.5ms |
+
+Measured by `python -m pif.eval` on a seeded 80/20 split, with the semantic index
+rebuilt from the training half only. CI fails on an F1 regression against the saved
+baseline.
+
+Read those numbers with the sample size in mind. Per-category recall runs on 2–8
+held-out examples per attack type, which is enough to catch a category falling over
+and not enough to rank categories against each other.
+
 ---
 
 ## Architecture
