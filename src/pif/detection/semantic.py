@@ -39,10 +39,15 @@ def _get_model() -> SentenceTransformer:
     return _model
 
 
+def _encode(texts: Any) -> np.ndarray:
+    """encode() is typed as returning a Tensor; we always want a plain array."""
+    return np.asarray(_get_model().encode(texts, convert_to_numpy=True, normalize_embeddings=True))
+
+
 @functools.lru_cache(maxsize=512)
 def _encode_cached(text: str) -> np.ndarray:
     """Cache single-string embeddings to avoid recomputing on repeated inputs."""
-    return _get_model().encode(text, convert_to_numpy=True, normalize_embeddings=True)
+    return _encode(text)
 
 
 def cache_info() -> Any:
@@ -103,7 +108,6 @@ def _load_corpus(corpus_path: str) -> tuple[np.ndarray, np.ndarray]:
         if _injection_embeddings is not None and _benign_embeddings is not None:
             return _injection_embeddings, _benign_embeddings
 
-        model = _get_model()
         path = Path(corpus_path)
 
         injections_file = path / "injections.jsonl"
@@ -154,19 +158,19 @@ def _load_corpus(corpus_path: str) -> tuple[np.ndarray, np.ndarray]:
                 f"No injection examples found at {injections_file}. Run `pif reindex` first."
             )
 
-        _injection_embeddings = model.encode(injection_texts, normalize_embeddings=True)
-        _benign_embeddings = (
-            model.encode(benign_texts, normalize_embeddings=True) if benign_texts else np.array([])
-        )
+        injections = _encode(injection_texts)
+        benign = _encode(benign_texts) if benign_texts else np.array([])
 
         # Build per-type embedding matrices
         _injection_embeddings_by_type = {
-            attack_type: model.encode(texts, normalize_embeddings=True)
+            attack_type: _encode(texts)
             for attack_type, texts in texts_by_type.items()
             if texts  # guard: skip empty (shouldn't happen, but be safe)
         }
+        _injection_embeddings = injections
+        _benign_embeddings = benign
 
-        return _injection_embeddings, _benign_embeddings
+        return injections, benign
 
 
 # How many neighbours per category vote on the label. One stray corpus line
