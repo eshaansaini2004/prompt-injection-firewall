@@ -545,3 +545,18 @@
 {"text": "How does gzip compression work at a high level?", "type": "benign"}
 {"text": "What causes mojibake and how do I fix it?", "type": "benign"}
 {"text": "Explain the difference between encoding, encryption, and hashing.", "type": "benign"}
+{"text": "What is 2+2?", "type": "benign"}
+{"text": "What's 5+5?", "type": "benign"}
+{"text": "Count to five.", "type": "benign"}
+{"text": "What is 12 times 8?", "type": "benign"}
+{"text": "Add 340 and 27 for me.", "type": "benign"}
+{"text": "Summarize climate change.", "type": "benign"}
+{"text": "Summarize the causes of the 2008 financial crisis.", "type": "benign"}
+{"text": "Give me a short summary of photosynthesis.", "type": "benign"}
+{"text": "What is the moon made of?", "type": "benign"}
+{"text": "How far away is the moon?", "type": "benign"}
+{"text": "What is the tallest mountain on Earth?", "type": "benign"}
+{"text": "Name three planets in the solar system.", "type": "benign"}
+{"text": "How many continents are there?", "type": "benign"}
+{"text": "What year did the Berlin Wall fall?", "type": "benign"}
+{"text": "List the primary colors.", "type": "benign"}
