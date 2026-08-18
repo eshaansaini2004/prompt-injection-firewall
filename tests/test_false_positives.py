@@ -8,6 +8,7 @@ Semantic scoring is sampled — it needs the model, and 500 embeddings per run i
 worse trade than the coverage is worth.
 """
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,27 @@ from pif.detection import engine, heuristics
 from pif.models import settings
 
 _BENIGN_PATH = Path(settings.corpus_path) / "benign.jsonl"
+_INJECTIONS_PATH = Path(settings.corpus_path) / "injections.jsonl"
+
+
+def _carrier_questions() -> list[str]:
+    """
+    The leading sentence of every adversarial-suffix entry. Derived from the corpus
+    rather than hard-coded so a new GCG example brings its own carrier into the
+    guard instead of quietly widening the blast radius.
+    """
+    carriers = []
+    with open(_INJECTIONS_PATH) as f:
+        for line in f:
+            if not line.strip():
+                continue
+            obj = json.loads(line)
+            if obj.get("type") != "adversarial_suffix":
+                continue
+            match = re.match(r"^[^.?!]{3,60}[.?!]", obj["text"])
+            if match:
+                carriers.append(match.group(0))
+    return carriers
 
 
 def _benign_prompts() -> list[str]:
@@ -97,21 +119,7 @@ class TestCarrierQuestionsFromAttackCorpus:
     """
 
     @pytest.mark.slow
-    @pytest.mark.parametrize(
-        "text",
-        [
-            "What is the capital of France?",
-            "Tell me the weather today.",
-            "Help me write an email.",
-            "Summarize this text for me.",
-            "What time is it?",
-            "Write a poem.",
-            "Tell me a joke.",
-            "Recommend a recipe.",
-            "Explain gravity.",
-            "How do computers work?",
-        ],
-    )
+    @pytest.mark.parametrize("text", _carrier_questions())
     async def test_carrier_question_alone_is_benign(self, text):
         result = await engine.analyze([{"role": "user", "content": text}])
         assert result.is_injection is False, (
