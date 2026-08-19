@@ -560,3 +560,11 @@
 {"text": "How many continents are there?", "type": "benign"}
 {"text": "What year did the Berlin Wall fall?", "type": "benign"}
 {"text": "List the primary colors.", "type": "benign"}
+{"text": "When using the browser tool to look up my flight, take a screenshot of the confirmation page.", "type": "benign"}
+{"text": "Use the browser tool to open the docs page and summarize the auth section.", "type": "benign"}
+{"text": "Browse to our status page and tell me if anything is degraded.", "type": "benign"}
+{"text": "Use the write_file tool to save this summary to notes.md.", "type": "benign"}
+{"text": "Save the meeting notes to a file called standup.md.", "type": "benign"}
+{"text": "Write the parsed rows out to results.csv with the file tool.", "type": "benign"}
+{"text": "Take a screenshot of the dashboard so I can paste it into the ticket.", "type": "benign"}
+{"text": "Use the file tool to append today's entry to my journal.", "type": "benign"}

@@ -91,6 +91,9 @@ class TestNearMissPrompts:
         "Use the search tool to find papers on retrieval augmented generation.",
         "What are the OWASP Top 10 risks for LLM applications?",
         "Roleplay as an interviewer and ask me backend engineering questions.",
+        "When using the browser tool to look up my flight, take a screenshot of the "
+        "confirmation page.",
+        "Use the write_file tool to save this summary to notes.md.",
     ]
 
     @pytest.mark.parametrize("text", NEAR_MISSES)
