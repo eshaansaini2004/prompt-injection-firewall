@@ -1,14 +1,14 @@
 {
-  "precision": 0.9683,
-  "recall": 0.8841,
-  "f1": 0.9242,
-  "roc_auc": 0.9824,
-  "accuracy": 0.9438,
-  "tp": 61,
+  "precision": 0.9677,
+  "recall": 0.8696,
+  "f1": 0.916,
+  "roc_auc": 0.9828,
+  "accuracy": 0.9399,
+  "tp": 60,
   "fp": 2,
-  "tn": 107,
-  "fn": 8,
+  "tn": 112,
+  "fn": 9,
   "threshold": 0.4,
   "n_injection": 69,
-  "n_benign": 109
+  "n_benign": 114
 }
