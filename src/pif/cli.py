@@ -27,23 +27,32 @@ def serve(
 
 
 def _find_carrier_text_entries(
-    corpus_path: Path, margin: float = 0.05
-) -> list[tuple[str, float, float]]:
+    corpus_path: Path, threshold: float | None = None
+) -> list[tuple[str, str, float]]:
     """
-    Find injection entries whose nearest benign neighbour beats their nearest
-    *other* attack entry by `margin`.
+    Find injection entries that are the sole reason their own carrier text blocks.
 
-    These are the corpus records that backfire: an attack example made mostly of
-    ordinary text (a GCG suffix bolted onto "What is the capital of France?") sits
-    right next to that harmless question in embedding space, so indexing it teaches
-    the semantic layer to flag the question.
+    An attack example made mostly of ordinary text (a GCG suffix bolted onto "What
+    is the capital of France?") sits right next to that harmless question in
+    embedding space, so indexing it teaches the semantic layer to flag the question.
+    Leave-one-out is what separates those from honest entries: score each opening
+    sentence against the corpus with, then without, its own entry. An entry is
+    flagged when dropping it takes the carrier below the block threshold *and*
+    leaves it sitting closer to the benign corpus — that entry is carrying a false
+    positive on text that reads benign without it.
+
+    Returns (carrier, full entry text, confidence) for each offender.
     """
     import json
+    import re
 
     import numpy as np
     from sklearn.metrics.pairwise import cosine_similarity
 
     from pif.detection import semantic
+    from pif.models import settings
+
+    block_threshold = threshold if threshold is not None else settings.block_threshold
 
     def _load(name: str) -> list[str]:
         with open(corpus_path / name) as f:
@@ -52,22 +61,41 @@ def _find_carrier_text_entries(
     injections = _load("injections.jsonl")
     benign = _load("benign.jsonl")
 
-    model = semantic._get_model()
-    inj_embs = model.encode(injections, normalize_embeddings=True)
-    ben_embs = model.encode(benign, normalize_embeddings=True)
+    carriers: dict[int, str] = {}
+    for i, text in enumerate(injections):
+        match = re.match(r"^[^.?!]{3,60}[.?!]", text)
+        # A carrier only matters if the entry has more after it.
+        if match and len(match.group(0)) < len(text.strip()):
+            carriers[i] = match.group(0)
 
-    inj_to_inj = cosine_similarity(inj_embs, inj_embs)
-    np.fill_diagonal(inj_to_inj, -1.0)  # don't let an entry match itself
-    inj_to_ben = cosine_similarity(inj_embs, ben_embs)
+    if not carriers:
+        return []
+
+    model = semantic._get_model()
+    idx = list(carriers)
+    car_embs = np.asarray(model.encode([carriers[i] for i in idx], normalize_embeddings=True))
+    inj_embs = np.asarray(model.encode(injections, normalize_embeddings=True))
+    ben_embs = np.asarray(model.encode(benign, normalize_embeddings=True))
+
+    car_to_inj = cosine_similarity(car_embs, inj_embs)
+    ben_max = cosine_similarity(car_embs, ben_embs).max(axis=1)
 
     suspects = []
-    for i, text in enumerate(injections):
-        best_attack = float(inj_to_inj[i].max())
-        best_benign = float(inj_to_ben[i].max())
-        if best_benign - best_attack > margin:
-            suspects.append((text, best_attack, best_benign))
+    for row, i in enumerate(idx):
+        sims = car_to_inj[row]
+        with_entry = float(sims.max())
+        without = float(np.delete(sims, i).max())
+        # Same benign discount the semantic layer applies.
+        score = with_entry * 0.5 if ben_max[row] > with_entry else with_entry
+        score_without = without * 0.5 if ben_max[row] > without else without
+        # Two conditions: this entry alone pushes the carrier over the line, and
+        # the carrier reads benign once it's gone. The first alone flags every
+        # attack whose opening line is the attack; the second alone flags healthy
+        # entries that merely have a benign neighbour.
+        if score >= block_threshold > score_without and ben_max[row] > without:
+            suspects.append((carriers[i], injections[i], round(score, 4)))
 
-    return sorted(suspects, key=lambda s: s[2] - s[1], reverse=True)
+    return sorted(suspects, key=lambda s: s[2], reverse=True)
 
 
 @app.command()
@@ -114,15 +142,16 @@ def check_corpus(
     suspects = _find_carrier_text_entries(path)
 
     if not suspects:
-        console.print("[green]No carrier-text entries found.[/green]")
+        console.print("[green]No carrier text blocks on its own.[/green]")
         return
 
     console.print(
-        f"[red]{len(suspects)} injection entries look more benign than malicious.[/red]\n"
+        f"[red]{len(suspects)} injection entries whose opening sentence blocks alone.[/red]\n"
         "[dim]These teach the index to flag whatever benign text they wrap.[/dim]"
     )
-    for text, inj_sim, ben_sim in suspects:
-        console.print(f"  benign={ben_sim:.3f} > attack={inj_sim:.3f} :: {text[:80]}")
+    for carrier, text, confidence in suspects:
+        console.print(f"  {confidence:.3f} :: {carrier}")
+        console.print(f"        [dim]in: {text[:70]}[/dim]")
 
 
 @app.command()

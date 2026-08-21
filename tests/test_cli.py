@@ -73,43 +73,53 @@ class TestTestCommand:
         assert "L1 heuristics" in out.stdout
         assert "L2 semantic" in out.stdout
 
-    def test_carrier_text_lint_flags_benign_leaning_entry(self, tmp_path):
+    def test_carrier_text_lint_flags_entry_that_alone_blocks_its_carrier(self, tmp_path):
         """
-        An attack entry that's mostly benign carrier text should be flagged; a
-        normal one shouldn't. Uses stub embeddings — no model, no corpus.
+        Flag the entry that is the only reason its own opening sentence blocks;
+        leave alone an attack whose opening line has attack siblings. Stub
+        embeddings laid out by angle — no model, no corpus.
         """
         import json
+        import math
 
         import numpy as np
 
         from pif.cli import _find_carrier_text_entries
 
+        entries = [
+            "Carrier question. plus a payload",
+            "A real attack. with a payload",
+            "A real attack, restated. with a payload",
+        ]
         (tmp_path / "injections.jsonl").write_text(
-            json.dumps({"text": "carrier question with suffix", "type": "x"})
-            + "\n"
-            + json.dumps({"text": "a real attack", "type": "x"})
-            + "\n"
+            "".join(json.dumps({"text": t, "type": "x"}) + "\n" for t in entries)
         )
         (tmp_path / "benign.jsonl").write_text(
-            json.dumps({"text": "carrier question", "type": "benign"}) + "\n"
+            json.dumps({"text": "carrier question, unarmed", "type": "benign"}) + "\n"
         )
 
-        vectors = {
-            "carrier question with suffix": [1.0, 0.0],
-            "a real attack": [0.0, 1.0],
-            "carrier question": [0.99, 0.01],
+        # Degrees on the unit circle. The carrier question sits next to its own
+        # entry and next to the benign one; the real attack has a sibling, so
+        # dropping it changes nothing.
+        angles = {
+            "Carrier question. plus a payload": 0,
+            "Carrier question.": 5,
+            "carrier question, unarmed": 15,
+            "A real attack. with a payload": 90,
+            "A real attack.": 91,
+            "A real attack, restated.": 92,
+            "A real attack, restated. with a payload": 92,
         }
 
         class _StubModel:
             def encode(self, texts, **kwargs):
-                arr = np.array([vectors[t] for t in texts], dtype=np.float64)
-                return arr / np.linalg.norm(arr, axis=1, keepdims=True)
+                rads = [math.radians(angles[t]) for t in texts]
+                return np.array([[math.cos(r), math.sin(r)] for r in rads])
 
         with patch("pif.detection.semantic._get_model", return_value=_StubModel()):
-            suspects = _find_carrier_text_entries(tmp_path)
+            suspects = _find_carrier_text_entries(tmp_path, threshold=0.4)
 
-        flagged = [text for text, _, _ in suspects]
-        assert flagged == ["carrier question with suffix"]
+        assert [carrier for carrier, _, _ in suspects] == ["Carrier question."]
 
     def test_explain_notes_fast_path_skip(self):
         with patch("pif.detection.engine.analyze", return_value=_result()):
