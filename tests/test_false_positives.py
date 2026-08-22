@@ -94,6 +94,9 @@ class TestNearMissPrompts:
         "When using the browser tool to look up my flight, take a screenshot of the "
         "confirmation page.",
         "Use the write_file tool to save this summary to notes.md.",
+        "Resume header: John Smith, Software Engineer. Five years of backend "
+        "experience in Python and Go.",
+        "Support ticket body: I cannot log in. The reset email never arrives.",
     ]
 
     @pytest.mark.parametrize("text", NEAR_MISSES)
