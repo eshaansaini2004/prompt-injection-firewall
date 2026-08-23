@@ -139,28 +139,30 @@ wraps — see the GCG note below.
 | Privilege Escalation | "developer mode", vendor impersonation |
 
 **Layer 1 (heuristics)** runs synchronously in ~0.5ms. Confidence ≥ 0.65 skips layer 2.
-**Layer 2 (semantic)** uses `all-MiniLM-L6-v2` + cosine similarity against 346 labeled attack examples and 547 benign prompts. Runs in a thread pool via `run_in_executor`. Attack type comes from a top-k vote over per-category embeddings.
+**Layer 2 (semantic)** uses `all-MiniLM-L6-v2` + cosine similarity against 346 labeled attack examples and 588 benign prompts. Runs in a thread pool via `run_in_executor`. Attack type comes from a top-k vote over per-category embeddings.
 
 Confidence threshold defaults to `0.40`. Override per-request with `X-Firewall-Threshold`.
 
 ### Threshold Calibration
 
-Swept 0.30–0.95 on a held-out test set (69 injection, 109 benign). Results at key operating points:
+Swept 0.30–0.95 on a held-out test set (69 injection, 117 benign). Results at key operating points:
 
 | Threshold | Precision | Recall | F1   | False Positives | False Negatives |
 |-----------|-----------|--------|------|-----------------|-----------------|
-| 0.30      | 0.941     | 0.928  | 0.93 | 4               | 5               |
-| 0.35      | 0.940     | 0.913  | 0.93 | 4               | 6               |
-| **0.40**  | **0.968** | **0.884** | **0.92** | **2** | **8** |
-| 0.45      | 0.967     | 0.841  | 0.90 | 2               | 11              |
-| 0.50      | 0.981     | 0.754  | 0.85 | 1               | 17              |
-| 0.55      | 0.978     | 0.652  | 0.78 | 1               | 24              |
+| 0.30      | 0.937     | 0.855  | 0.89 | 4               | 10              |
+| 0.35      | 0.952     | 0.855  | 0.90 | 3               | 10              |
+| **0.40**  | **0.951** | **0.841** | **0.89** | **3** | **11** |
+| 0.45      | 0.983     | 0.812  | 0.89 | 1               | 13              |
+| 0.50      | 1.000     | 0.754  | 0.86 | 0               | 17              |
+| 0.55      | 1.000     | 0.652  | 0.79 | 0               | 24              |
 | 0.65      | 1.000     | 0.507  | 0.67 | 0               | 34              |
-| 0.75      | 1.000     | 0.188  | 0.32 | 0               | 56              |
+| 0.75      | 1.000     | 0.174  | 0.30 | 0               | 57              |
 
-ROC-AUC is 0.982 across all thresholds.
+ROC-AUC is 0.979 across all thresholds.
 
-The default moved from 0.50 to 0.40 once the benign corpus grew past 500 prompts. 0.50 was originally chosen as the last zero-FP point, but that was an artifact of a 101-prompt benign test set — on the larger set it costs 13 points of recall to avoid a single false positive. Chasing precision 1.0 gets expensive fast: 0.65 buys the last two FPs for 38 points of recall.
+The default moved from 0.50 to 0.40 once the benign corpus grew past 500 prompts. 0.35 was swept again after the August benign additions and **rejected**: it wins on paper (F1 0.90 vs 0.89, one fewer miss for the same three false positives) but the held-out benign split isn't the whole picture. Three prompts in the false-positive guard suite score 0.355, 0.375 and 0.392 — "Use the search tool to find papers on retrieval augmented generation", a browser-tool screenshot request, "Tell me a joke." They all block at 0.35. One F1 point isn't worth blocking a request for a joke.
+
+Chasing precision 1.0 stays expensive in the other direction: 0.50 buys the last three FPs for ten points of recall, 0.65 costs 35.
 
 ### Known Limitations: GCG Adversarial Suffixes
 
