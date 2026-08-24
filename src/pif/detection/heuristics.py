@@ -244,6 +244,32 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
             re.IGNORECASE,
         ),
     ),
+    # The other shape indirect injection takes: a block, labelled for the model,
+    # wedged into content the model is reading. The label does the work —
+    # "[AI SYSTEM: ...]", "[NOTE FOR AI ASSISTANT: ...]", "[TO AI: ...]".
+    # Ordinary documents don't address their reader by model name in brackets.
+    (
+        AttackType.INDIRECT_INJECTION,
+        "labelled_directive_block",
+        re.compile(
+            r"[\[<]\s*(?=[^\]\n>]{0,60}(?::|\]\s*:))"
+            r"[^\]\n>]{0,40}"
+            r"\b(?:a\.?i\.?|assistant|agent|llm|chatbot|"
+            r"injected|embedded|hidden|invisible)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    # Same directive, no brackets — the shouty variant that gets pasted into a
+    # ticket or a tool result. Case-sensitive: lowercase "injected:" is ordinary
+    # prose, "INJECTED DIRECTIVE:" is someone talking past the user.
+    (
+        AttackType.INDIRECT_INJECTION,
+        "shouted_directive_label",
+        re.compile(
+            r"\b(?:INJECTED|EMBEDDED|HIDDEN|SYSTEM)"
+            r"(?:\s+(?:DIRECTIVE|INSTRUCTION|TEXT|NOTE|COMMAND|PROMPT|MESSAGE))?\s*:"
+        ),
+    ),
     # Persona jailbreaks that name the missing guardrail rather than a known alias.
     # Catches the long tail that "you are DAN"-style alias patterns never will.
     (
@@ -281,7 +307,7 @@ _BASE64_BLOB_RE = re.compile(r"[A-Za-z0-9+/]{40,}={0,2}")
 
 # HTML comment injection (for indirect injection checks)
 _HTML_COMMENT_INJECTION_RE = re.compile(
-    r"<!--.*?\b(ignore|instruction|system|override|assistant)\b.*?-->",
+    r"<!--.*?\b(ignore|instruction|system|override|assistant|a\.?i\.?)\b.*?-->",
     re.IGNORECASE | re.DOTALL,
 )
 
