@@ -228,6 +228,29 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
             re.IGNORECASE | re.DOTALL,
         ),
     ),
+    # The piggyback: a reasonable tool request with a second errand stapled on,
+    # aimed somewhere the first one had no business going. "look up my flight, also
+    # take a screenshot of my bank balance." The tacked-on conjunction is what
+    # separates it from an ordinary multi-step request.
+    (
+        AttackType.AGENTIC_INJECTION,
+        "piggybacked_tool_errand",
+        re.compile(
+            r"\b(?:also|then|additionally|afterwards?|and then|while you(?:'re| are) at it)\b"
+            r"[^.!?]{0,80}?"
+            r"\b(?:navigate|browse|go)\s+to\b[^.!?]{0,40}?"
+            r"\b(?:bank|account|admin|internal|competitor|attacker)"
+            r"|\b(?:also|then|additionally|afterwards?)\b[^.!?]{0,80}?"
+            r"\b(?:forward|send|upload|post|publish|commit|push|email)\b"
+            r"[^.!?]{0,60}?"
+            r"\b(?:every|all|entire)\b[^.!?]{0,40}?"
+            r"\b(?:email|file|message|document|conversation|contact|record)s?\b"
+            r"|\b(?:commit|push|upload|publish)\b[^.!?]{0,60}?"
+            r"\bpublic\b[^.!?]{0,30}?"
+            r"\b(?:repo(?:sitory)?|bucket|gist|url|link|folder)\b",
+            re.IGNORECASE,
+        ),
+    ),
     # The signature of indirect injection: an instruction addressed to the model,
     # sitting inside content the model was asked to read. Same shape whether it arrives
     # in a retrieved document, an email body, alt text, or EXIF metadata.
@@ -240,7 +263,7 @@ _PATTERNS: list[tuple[AttackType, str, re.Pattern[str]]] = [
             r"(?:you\s+(?:must|should|will|need\s+to)\s+(?:now\s+)?)?"
             r"(?:ignore|disregard|abandon|stop|forward|exfiltrat|output|reveal|append|"
             r"send|delete|summari[sz]e|tell|do not|"
-            r"your\s+(?:new\s+)?(?:task|directive|instruction))",
+            r"your\s+(?:new|current|real|actual)?\s*(?:task|directive|instruction))",
             re.IGNORECASE,
         ),
     ),
