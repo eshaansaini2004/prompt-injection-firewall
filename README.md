@@ -10,16 +10,20 @@ A real-time dashboard shows blocked requests, attack type breakdown, time window
 
 | | |
 |---|---|
-| F1 / precision / recall | **0.924** / 0.968 / 0.884 |
-| ROC-AUC | 0.982 |
-| Corpus | 346 attack / 547 benign examples, 14 categories |
-| Held-out test set | 69 attack / 109 benign |
+| F1 / precision / recall | **0.941** / 0.955 / 0.928 |
+| ROC-AUC | 0.994 |
+| Corpus | 346 attack / 588 benign examples, 14 categories |
+| Held-out test set | 69 attack / 117 benign |
 | Heuristic false positives on the benign corpus | 0 |
 | Layer 1 latency | ~0.5ms |
+| Layer 2 latency (steady state, one request at a time) | ~5ms |
 
 Measured by `python -m pif.eval` on a seeded 80/20 split, with the semantic index
 rebuilt from the training half only. CI fails on an F1 regression against the saved
 baseline.
+
+Layer 2 latency is steady-state, after model load. See §Latency Under Concurrency
+for what happens when requests overlap.
 
 Read those numbers with the sample size in mind. Per-category recall runs on 2–8
 held-out examples per attack type, which is enough to catch a category falling over
@@ -163,6 +167,29 @@ ROC-AUC is 0.979 across all thresholds.
 The default moved from 0.50 to 0.40 once the benign corpus grew past 500 prompts. 0.35 was swept again after the August benign additions and **rejected**: it wins on paper (F1 0.90 vs 0.89, one fewer miss for the same three false positives) but the held-out benign split isn't the whole picture. Three prompts in the false-positive guard suite score 0.355, 0.375 and 0.392 — "Use the search tool to find papers on retrieval augmented generation", a browser-tool screenshot request, "Tell me a joke." They all block at 0.35. One F1 point isn't worth blocking a request for a joke.
 
 Chasing precision 1.0 stays expensive in the other direction: 0.50 buys the last three FPs for ten points of recall, 0.65 costs 35.
+
+### Latency Under Concurrency
+
+`scripts/bench_semantic.py`, 64 unique prompts per level (unique because the LRU
+cache answers repeats for free), M-series laptop:
+
+| Concurrency | p50 | p95 | Throughput |
+|---|---|---|---|
+| 1  | 5.0ms   | 5.4ms   | 190 req/s |
+| 4  | 20.6ms  | 26.3ms  | 177 req/s |
+| 8  | 47.8ms  | 55.8ms  | 155 req/s |
+| 16 | 86.1ms  | 90.9ms  | 167 req/s |
+| 32 | 177.9ms | 298.0ms | 124 req/s |
+
+Throughput is flat and latency scales linearly with concurrency, which means the
+thread pool buys nothing — the embedding work serializes anyway, on the GIL and on
+torch's own intra-op threads. `run_in_executor` is still required (it keeps the
+event loop free to accept connections and stream upstream responses), it just isn't
+a scaling story. One process handles roughly 150-190 detections/sec regardless of
+how many arrive at once; past that, requests queue.
+
+The ~1.4s p50 the eval used to report was model load amortised over a cold-start
+batch, not steady state.
 
 ### Known Limitations: GCG Adversarial Suffixes
 
