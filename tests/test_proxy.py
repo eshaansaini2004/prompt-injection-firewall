@@ -217,3 +217,54 @@ class TestStreaming:
 
         assert resp.status_code == 200
         assert b"data: [DONE]" in resp.content
+
+
+class TestMalformedRequests:
+    """
+    Everything a client can put on the wire before the detection layer ever runs.
+    All three of these used to raise inside the handler and come back as a 500.
+    """
+
+    async def test_invalid_json_body_is_a_400(self, client):
+        resp = await client.post(
+            "/v1/chat/completions",
+            content=b"{not json",
+            headers={"Content-Type": "application/json"},
+        )
+
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "invalid_request"
+
+    async def test_non_object_body_is_a_400(self, client):
+        resp = await client.post("/v1/chat/completions", json=["messages"])
+
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "invalid_request"
+
+    @pytest.mark.parametrize("value", ["5.0", "-1", "1.5"])
+    async def test_out_of_range_threshold_is_rejected(self, client, benign_result, value):
+        """
+        The header is a per-request override, not a bypass — 5.0 would have made
+        every request unblockable, and the handler took it without a word.
+        """
+        with (
+            patch("pif.proxy.engine.analyze", return_value=benign_result) as analyze,
+            patch("pif.proxy.db.log_event", new_callable=AsyncMock),
+        ):
+            resp = await client.post(
+                "/v1/chat/completions",
+                json={"model": "gpt-4", "messages": [{"role": "user", "content": "hi"}]},
+                headers={"X-Firewall-Threshold": value},
+            )
+
+        assert resp.status_code == 422
+        analyze.assert_not_called()
+
+    async def test_garbage_content_length_does_not_crash_the_middleware(self, client):
+        resp = await client.post(
+            "/v1/chat/completions",
+            content=b"{not json",
+            headers={"Content-Type": "application/json", "content-length": "abc"},
+        )
+
+        assert resp.status_code == 400

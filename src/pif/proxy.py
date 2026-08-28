@@ -76,7 +76,11 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)  # type: ignor
 @app.middleware("http")
 async def request_size_limit(request: Request, call_next: Any) -> Response:
     content_length = request.headers.get("content-length")
-    if content_length is not None and int(content_length) > settings.max_request_size_bytes:
+    if content_length is not None and content_length.isdigit():
+        declared = int(content_length)
+    else:
+        declared = 0
+    if declared > settings.max_request_size_bytes:
         return JSONResponse(
             status_code=413,
             content={"error": {"message": "Request body too large", "code": "request_too_large"}},
@@ -131,10 +135,22 @@ def _require_dashboard_auth(authorization: str | None = Header(default=None)) ->
 async def proxy_chat(
     request: Request,
     x_firewall_mode: str = Header(default="block"),
-    x_firewall_threshold: float | None = Header(default=None),
+    x_firewall_threshold: float | None = Header(default=None, ge=0.0, le=1.0),
     x_session_id: str | None = Header(default=None),
 ) -> Response:
-    body = await request.json()
+    try:
+        body = await request.json()
+    except ValueError:
+        return JSONResponse(
+            status_code=400,
+            content={"error": {"message": "Invalid JSON body", "code": "invalid_request"}},
+        )
+    if not isinstance(body, dict):
+        return JSONResponse(
+            status_code=400,
+            content={"error": {"message": "Body must be a JSON object", "code": "invalid_request"}},
+        )
+
     messages = body.get("messages", [])
     model = body.get("model", "unknown")
 
