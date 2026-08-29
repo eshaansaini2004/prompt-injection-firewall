@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     # 109 benign test examples it costs 13 points of recall to save one false positive.
     block_threshold: float = 0.40
     store_payloads: bool = False
+    # Server-side mode. "monitor" logs without blocking — useful for a rollout,
+    # dangerous as a client-supplied header, which is why that needs opting in.
+    firewall_mode: str = "block"
+    allow_client_overrides: bool = False
     max_request_size_bytes: int = 1_048_576
     dashboard_api_key: str | None = None
     cors_allowed_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]

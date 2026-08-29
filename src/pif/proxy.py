@@ -151,12 +151,25 @@ async def proxy_chat(
             content={"error": {"message": "Body must be a JSON object", "code": "invalid_request"}},
         )
 
+    overrides = x_firewall_mode != "block" or x_firewall_threshold is not None
+    if overrides and not settings.allow_client_overrides:
+        return JSONResponse(
+            status_code=403,
+            content={
+                "error": {
+                    "message": "Per-request firewall overrides are disabled",
+                    "code": "overrides_disabled",
+                }
+            },
+        )
+
     messages = body.get("messages", [])
     model = body.get("model", "unknown")
 
     result = await engine.analyze(messages, threshold=x_firewall_threshold)
 
-    blocked = result.is_injection and x_firewall_mode != "monitor"
+    mode = x_firewall_mode if settings.allow_client_overrides else settings.firewall_mode
+    blocked = result.is_injection and mode != "monitor"
 
     task = asyncio.create_task(db.log_event(result, _messages_to_text(messages), model, blocked))
     task.add_done_callback(

@@ -145,7 +145,8 @@ wraps — see the GCG note below.
 **Layer 1 (heuristics)** runs synchronously in ~0.5ms. Confidence ≥ 0.65 skips layer 2.
 **Layer 2 (semantic)** uses `all-MiniLM-L6-v2` + cosine similarity against 346 labeled attack examples and 588 benign prompts. Runs in a thread pool via `run_in_executor`. Attack type comes from a top-k vote over per-category embeddings.
 
-Confidence threshold defaults to `0.40`. Override per-request with `X-Firewall-Threshold`.
+Confidence threshold defaults to `0.40`. Per-request override with
+`X-Firewall-Threshold`, which the operator has to enable (see §Headers).
 
 ### Threshold Calibration
 
@@ -215,6 +216,12 @@ This is a fundamental constraint: statistical heuristics catch GCG in practice b
 | `X-Firewall-Mode` | `block` (default), `monitor` | `monitor` logs but never blocks |
 | `X-Firewall-Threshold` | float 0–1 | Override block threshold for this request |
 | `X-Session-Id` | string | Tag events with a session identifier |
+
+The first two are **off by default** and return 403 unless the operator sets
+`ALLOW_CLIENT_OVERRIDES=true`. A header any caller can add is not a control:
+`X-Firewall-Mode: monitor` turned off blocking for anyone who could reach the
+proxy. Monitor mode as a rollout setting lives in `FIREWALL_MODE` instead, and an
+out-of-range threshold is a 422 rather than a silent bypass.
 
 ---
 

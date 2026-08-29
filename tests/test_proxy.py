@@ -68,6 +68,7 @@ class TestProxyBlocking:
 
         mock_log = AsyncMock()
         with (
+            patch("pif.proxy.settings.allow_client_overrides", True),
             patch("pif.proxy.engine.analyze", return_value=blocked_result),
             patch("pif.proxy.db.log_event", mock_log),
             patch(
@@ -268,3 +269,70 @@ class TestMalformedRequests:
         )
 
         assert resp.status_code == 400
+
+
+class TestOverrideHeaders:
+    """
+    X-Firewall-Mode: monitor turned blocking off for anyone who could reach the
+    proxy. That's fine as an operator setting, not as a header any caller can add.
+    """
+
+    async def test_mode_header_rejected_by_default(self, client, blocked_result):
+        with (
+            patch("pif.proxy.engine.analyze", return_value=blocked_result) as analyze,
+            patch("pif.proxy.db.log_event", new_callable=AsyncMock),
+        ):
+            resp = await client.post(
+                "/v1/chat/completions",
+                json={"model": "gpt-4", "messages": [{"role": "user", "content": "hi"}]},
+                headers={"X-Firewall-Mode": "monitor"},
+            )
+
+        assert resp.status_code == 403
+        assert resp.json()["error"]["code"] == "overrides_disabled"
+        analyze.assert_not_called()
+
+    async def test_threshold_header_rejected_by_default(self, client, benign_result):
+        with (
+            patch("pif.proxy.engine.analyze", return_value=benign_result) as analyze,
+            patch("pif.proxy.db.log_event", new_callable=AsyncMock),
+        ):
+            resp = await client.post(
+                "/v1/chat/completions",
+                json={"model": "gpt-4", "messages": [{"role": "user", "content": "hi"}]},
+                headers={"X-Firewall-Threshold": "0.9"},
+            )
+
+        assert resp.status_code == 403
+        analyze.assert_not_called()
+
+    async def test_monitor_mode_honoured_when_operator_allows_it(self, client, blocked_result):
+        with (
+            patch("pif.proxy.settings.allow_client_overrides", True),
+            patch("pif.proxy.engine.analyze", return_value=blocked_result),
+            patch("pif.proxy.db.log_event", new_callable=AsyncMock),
+            patch("pif.proxy._http_client.post", new_callable=AsyncMock) as post,
+        ):
+            post.return_value = MagicMock(content=b"{}", status_code=200, headers={})
+            resp = await client.post(
+                "/v1/chat/completions",
+                json={"model": "gpt-4", "messages": [{"role": "user", "content": "hi"}]},
+                headers={"X-Firewall-Mode": "monitor"},
+            )
+
+        assert resp.status_code == 200
+
+    async def test_server_side_monitor_mode_does_not_block(self, client, blocked_result):
+        with (
+            patch("pif.proxy.settings.firewall_mode", "monitor"),
+            patch("pif.proxy.engine.analyze", return_value=blocked_result),
+            patch("pif.proxy.db.log_event", new_callable=AsyncMock),
+            patch("pif.proxy._http_client.post", new_callable=AsyncMock) as post,
+        ):
+            post.return_value = MagicMock(content=b"{}", status_code=200, headers={})
+            resp = await client.post(
+                "/v1/chat/completions",
+                json={"model": "gpt-4", "messages": [{"role": "user", "content": "hi"}]},
+            )
+
+        assert resp.status_code == 200
