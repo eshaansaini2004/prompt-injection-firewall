@@ -45,6 +45,12 @@ export async function fetchStats() {
   return apiFetch<Stats>(`${BASE}/api/stats`);
 }
 
+// /api/events returns a page wrapper, not a bare array. It also caps limit at
+// 200 server-side — ask for more and the request is rejected outright.
+export const EVENTS_PAGE_MAX = 200;
+
+export type EventsPage = { events: AttackEvent[]; limit: number; offset: number };
+
 export async function fetchEvents(params?: {
   limit?: number;
   offset?: number;
@@ -52,11 +58,23 @@ export async function fetchEvents(params?: {
   attack_type?: string;
 }) {
   const q = new URLSearchParams();
-  if (params?.limit) q.set("limit", String(params.limit));
+  if (params?.limit) q.set("limit", String(Math.min(params.limit, EVENTS_PAGE_MAX)));
   if (params?.offset) q.set("offset", String(params.offset));
   if (params?.blocked_only) q.set("blocked_only", "true");
   if (params?.attack_type) q.set("attack_type", params.attack_type);
-  return apiFetch<AttackEvent[]>(`${BASE}/api/events?${q}`);
+  return apiFetch<EventsPage>(`${BASE}/api/events?${q}`);
+}
+
+/** Page through /api/events for the export. Stops on a short page or at `max`. */
+export async function fetchAllEvents(max = 1000): Promise<AttackEvent[]> {
+  const all: AttackEvent[] = [];
+  while (all.length < max) {
+    const limit = Math.min(EVENTS_PAGE_MAX, max - all.length);
+    const page = await fetchEvents({ limit, offset: all.length });
+    all.push(...page.events);
+    if (page.events.length < limit) break;
+  }
+  return all;
 }
 
 export async function fetchTimeline(hours = 24) {

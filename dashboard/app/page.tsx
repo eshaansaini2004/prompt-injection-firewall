@@ -10,7 +10,7 @@ import {
   fetchStats,
   fetchTimeline,
   fetchAttackTypes,
-  fetchEvents,
+  fetchAllEvents,
   fetchEvent,
   createEventSocket,
   type Stats,
@@ -130,7 +130,7 @@ export default function Dashboard() {
   async function handleExport() {
     setExporting(true);
     try {
-      const data = await fetchEvents({ limit: 1000 });
+      const data = await fetchAllEvents();
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -138,6 +138,9 @@ export default function Dashboard() {
       a.download = `pif-events-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.json`;
       a.click();
       URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("export failed", err);
+      alert("Export failed — see console.");
     } finally {
       setExporting(false);
     }
