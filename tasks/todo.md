@@ -1,8 +1,9 @@
 # PIF — Todo
 
-Audited 2026-05-17, updated 2026-07-29 after a pass over lint, types, detection
-quality, and test coverage. Everything below is checked against the source, not
-against what an earlier version of this file assumed.
+Audited 2026-05-17, updated 2026-08-31 after two weeks on false positives, the
+corpus lint, agentic/indirect recall, and the proxy's front door. Everything below
+is checked against the source, not against what an earlier version of this file
+assumed.
 
 ## Detection
 
@@ -46,13 +47,24 @@ against what an earlier version of this file assumed.
   injection entry whose nearest benign neighbour beats its nearest attack neighbour.
   Currently reports 10 entries, including the one found by hand.
 
-- [ ] **Act on the 9 remaining carrier-text entries the lint reports**
-  Only the worst offender was rewritten. The rest are real but lower-impact; each
-  needs a judgement call on whether to rewrite or drop.
+- [x] **Act on the carrier-text entries the lint reports.** Done, and the lint
+  itself was wrong. Nearest-benign-neighbour flagged healthy entries and missed the
+  harmful ones; it's now leave-one-out (an entry is flagged only when dropping it
+  takes its own opening sentence below threshold *and* leaves it reading benign).
+  That surfaced the real damage: a resume header blocked at 0.64, a support ticket
+  at 0.66, a product listing at 0.71 — ordinary RAG content that indirect-injection
+  entries had taught the index to flag. Fixed with 41 benign prompts across GCG
+  carriers, tool-use, and retrieved-document shapes.
 
-- [ ] **Semantic latency is ~1.4s p50 in eval**
-  That's model load amortised across a cold-start batch, not steady state, but it
-  has never been measured properly under concurrency.
+- [ ] **17 entries still on the lint list.** They no longer cause false positives
+  (the benign neighbours pull them back), so this is corpus hygiene, not a bug.
+
+- [x] **Semantic latency measured under concurrency** — `scripts/bench_semantic.py`.
+  Steady state is 5ms p50, not 1.4s (that was model load spread over a cold-start
+  batch). Throughput is 124-190 req/s at *every* concurrency level and p50 scales
+  linearly with it, so the thread pool buys nothing — the embedding work serializes
+  on the GIL and torch's intra-op threads. `run_in_executor` still earns its keep by
+  keeping the event loop free; it is not a scaling story. Table in the README.
 
 ## Testing
 
@@ -84,16 +96,35 @@ against what an earlier version of this file assumed.
 - [x] **Dashboard typechecks and builds in CI** — it had five `tsc` errors sitting on
   master; `npm run lint` never looked at them.
 
-- [ ] **Dashboard still has no unit tests.**
-  CI now catches type and build breakage, which is most of the value for a read-only
-  UI this size. Actual component tests need a runner (vitest) that isn't installed.
+- [x] **Dashboard unit tests** — vitest over `lib/api.ts`, 12 cases, wired into CI.
+  Found the log export broken: it asked for 1000 events past a server cap of 200 and
+  threw into a try/finally with no catch. `fetchAllEvents` pages properly now, and
+  the response type says `{events, limit, offset}` like the endpoint actually
+  returns.
+
+- [ ] **Still no component tests.** The components are display code; a jsdom runner
+  costs more than it would catch. Revisit if they grow logic.
 
 ---
 
-## Current state (2026-08-13)
+## Current state (2026-08-31)
 
-- 216 tests passing, `ruff` and `mypy` clean across `src/` and `tests/`.
-- Eval: **F1 0.924, precision 0.968, recall 0.884** at threshold 0.40
-  (69 injection / 109 benign held out). Baseline gated in CI.
-- Heuristic false positives on the 547-prompt benign corpus: **0**.
-- Corpus: 346 injection / 547 benign.
+- 265 Python tests + 12 dashboard tests passing. `ruff` and `mypy` clean (mypy was
+  red on master for four errors in `semantic.py` — `model.encode` is typed as
+  returning a Tensor).
+- Eval: **F1 0.941, precision 0.955, recall 0.928** at threshold 0.40
+  (69 injection / 117 benign held out). Baseline gated in CI.
+- Heuristic false positives on the 588-prompt benign corpus: **0**.
+- Corpus: 346 injection / 588 benign.
+- Threshold stays 0.40. 0.35 wins on the held-out split and blocks "Tell me a joke"
+  — see README §Threshold Calibration.
+
+## Open
+
+- Multi-turn crescendo recall is 0.71, the weakest category. 19 of 21 entries clear
+  layer 1 untouched; the semantic layer carries them. A commitment-appeal pattern
+  ("we've established", "building on what you agreed") is the obvious next lever and
+  the obvious false-positive risk — an ordinary "as we discussed earlier" has the
+  same shape. Needs measurement before it needs code.
+- `heuristics.check` is now a ~250-line linear scan. Still cheap next to layer 2.
+- 17 corpus entries on the lint list (hygiene, not false positives).

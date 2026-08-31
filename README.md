@@ -267,13 +267,15 @@ DASHBOARD_API_KEY=     # optional; if set, all dashboard endpoints require Beare
 ## Testing
 
 ```bash
-pytest                          # all 216 tests
+pytest                          # all 265 tests
 pytest -m "not slow"            # skip anything needing the model download
 pytest tests/test_heuristics.py -v
 pytest -k "injection" --tb=short
 
 ruff check src/ tests/
 mypy src/
+
+cd dashboard && npm test    # vitest over lib/api.ts
 ```
 
 The semantic layer is mocked in engine tests, so the core suite needs no model
@@ -300,7 +302,7 @@ src/pif/
     ├── semantic.py     # Embedding similarity, LRU cache, per-category classification
     └── corpus/
         ├── injections.jsonl   # 346 labeled attack examples (14 categories)
-        └── benign.jsonl       # 547 benign prompts
+        └── benign.jsonl       # 588 benign prompts
 
 dashboard/              # Next.js app (App Router)
 ├── app/page.tsx        # Dashboard with time window selector and log export
